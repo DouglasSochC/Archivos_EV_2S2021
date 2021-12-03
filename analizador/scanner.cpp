@@ -59,15 +59,19 @@ void scanner::exec_command(vector<string> tokens){
 
     if (tokens.size() > 0){
         string comando = tokens[0];
-        comando = util_scnr.toLowerString(comando);
+        string comentario = comando;
+        comando = util_scnr.toLowerString(comando);        
         if (comando.substr(0,1) == "#"){
-            cout << cnst_scnr.BLUE << comando << endl;
+            cout << cnst_scnr.BLUE << comentario << cnst_scnr.NC << endl;
         }else if (comando == "mkdisk"){
             map<string, string> param_got = prmts_scnr.param_mkdisk(tokens);
             admdcs_scnr.mkdisk(param_got);
         }else if (comando == "rmdisk"){
             map<string, string> param_got = prmts_scnr.param_rmdisk(tokens);
             admdcs_scnr.rmdisk(param_got);
+        }else if (comando == "fdisk"){            
+            map<string, string> param_got = prmts_scnr.param_fdisk(tokens);
+            admdcs_scnr.fdisk(param_got);
         }else if(comando == "exec"){
             map<string, string> param_got = prmts_scnr.param_exec(tokens);
             scrp_scnr.exec(param_got);

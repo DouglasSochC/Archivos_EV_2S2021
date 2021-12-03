@@ -106,6 +106,82 @@ map<string, string> parameters::param_rmdisk(vector<string> tokens){
     return map_u;
 }
 
+map<string, string> parameters::param_fdisk(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++)
+    {
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-size" || llave == "-unit" || llave == "-path" || llave == "-type" || llave == "-fit" || llave == "-delete" || llave == "-name" || llave == "-add"))
+            {
+                cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
+            }else{
+                if (!map_u[llave].empty())
+                {
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
+        }
+    }
+
+    string comentario = map_u["-comentario"];
+    string size = map_u["-size"];
+    string unit = map_u["-unit"].empty() ? map_u["-unit"] = "K": util_prmts.toUpperString(map_u["-unit"]);
+    string path = map_u["-path"];
+    string type = map_u["-type"].empty() ? map_u["-type"] = "P": util_prmts.toUpperString(map_u["-type"]);
+    string fit = map_u["-fit"].empty() ? map_u["-fit"] = "WF": util_prmts.toUpperString(map_u["-fit"]);    
+    string delete_p = map_u["-delete"] = util_prmts.toUpperString(map_u["-delete"]);
+    string name = map_u["-name"];
+    string add_p = map_u["-add"];
+    
+    if (!path.empty() && !name.empty()){
+        if (delete_p.empty() && add_p.empty() && size.empty()){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro SIZE es obligatorio para crear una particion " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if (!size.empty() && !util_prmts.isNumber(size)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro SIZE debe de ser numerico " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if (!size.empty() && delete_p.empty() && add_p.empty() && atoi(size.c_str()) <= 0){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro SIZE debe de ser mayor a 0 " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(name.size() > 16){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro NAME tiene mas de 16 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if (!(unit == "B" || unit == "K" || unit == "M")){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro UNIT es incorrecto " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!util_prmts.check_correctExtFile(path)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " La extension del archivo es incorrecto " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!util_prmts.check_existFile(path)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El disco no existe en la ruta: " << path << " " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!(type == "P" || type == "E" || type == "L")){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro TYPE es incorrecto" << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!(fit == "BF" || fit == "FF" || fit == "WF")){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro FIT es incorrecto" << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!delete_p.empty() && !(delete_p == "FAST" || delete_p == "FULL")){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro DELETE es incorrecto" << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!delete_p.empty() && !add_p.empty()){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No se puede hacer un DELETE y un ADD al mismo tiempo" << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-name, -path)" << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
 /*FIN DISCOS*/
 
 /*INI SCRIPT*/

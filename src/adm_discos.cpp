@@ -90,3 +90,35 @@ void adm_discos::rmdisk(map<string, string> param_got){
         cout << csnt_admdcs.YELLOW << "AVISO:" << csnt_admdcs.NC << " No se realizo la eliminacion " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
     }
 }
+
+void adm_discos::fdisk(map<string, string> param_got){
+    if (param_got.size() == 0)
+    {
+        return;
+    }
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"];
+    int size = atoi(param_got["-size"].c_str());
+    char unit = param_got["-unit"][0];
+    string path = param_got["-path"];
+    char type = param_got["-type"][0];
+    char fit = param_got["-fit"][0];
+    string delete_p = param_got["-delete"];
+    string name = param_got["-name"];
+    int add_p = atoi(param_got["-add"].c_str());
+
+    /*Formateo de datos*/
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+    name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
+    if (unit == 'K'){
+        size = size * csnt_admdcs.AMOUNT_BITS;
+        add_p = add_p * csnt_admdcs.AMOUNT_BITS;
+    }else if(unit == 'M'){
+        size = size * csnt_admdcs.AMOUNT_BITS * csnt_admdcs.AMOUNT_BITS;
+        add_p = add_p * csnt_admdcs.AMOUNT_BITS * csnt_admdcs.AMOUNT_BITS;
+    }
+
+    /*Flujo de void*/
+    disco::MBR mbr;
+
+}

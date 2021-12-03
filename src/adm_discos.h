@@ -13,6 +13,7 @@ public:
     //METODOS PRINCIPALES
     void mkdisk(map<string, string> param_got);
     void rmdisk(map<string, string> param_got);
+    void fdisk(map<string, string> param_got);
 };
 
 #endif //ADM_DISCOS_H
