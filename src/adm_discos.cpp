@@ -18,14 +18,14 @@ void adm_discos::mkdisk(map<string, string> param_got){
     {
         return;
     }
-    /*Obteniendo Datos*/
+    /*Obteniendo datos*/
     string comentario = param_got["-comentario"];
     int size = atoi(param_got["-size"].c_str());
     char unit = util_admdcs.toLowerString(param_got["-unit"].c_str())[0];
     string fit = util_admdcs.toUpperString(param_got["-fit"].c_str());
     string path = param_got["-path"].c_str();
 
-    /*Formateo de Datos*/
+    /*Formateo de datos*/
     path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
     size = (unit == 'k') ? (size * csnt_admdcs.AMOUNT_BITS): (size * csnt_admdcs.AMOUNT_BITS * csnt_admdcs.AMOUNT_BITS);
     size = size + csnt_admdcs.SIZE_MBR;
@@ -65,4 +65,28 @@ void adm_discos::mkdisk(map<string, string> param_got){
         fclose(file);
     }
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La creacion del disco ha sido exitosa " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+}
+
+void adm_discos::rmdisk(map<string, string> param_got){
+    if (param_got.size() == 0)
+    {
+        return;
+    }
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string path = param_got["-path"].c_str();
+    
+    /*Formateo de datos*/
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+
+    /*Flujo del void*/
+    cout << csnt_admdcs.CYAN << "ELECCION:" << csnt_admdcs.NC << " ¿Desea eliminar el archivo? S/N" << endl;
+    string response;
+    getline(cin, response);
+    if (util_admdcs.toUpperString(response) == "S"){
+        remove(path.c_str());
+        cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " El disco ha sido eliminado correctamente " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }else{
+        cout << csnt_admdcs.YELLOW << "AVISO:" << csnt_admdcs.NC << " No se realizo la eliminacion " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }
 }

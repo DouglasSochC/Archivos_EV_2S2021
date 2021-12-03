@@ -43,3 +43,21 @@ Este comando creará un archivo binario que simulará undisco duro, estos archiv
 | -f        | Opcional    | Indicará el ajuste que utilizará el disco para crear las particiones dentro del disco Podrá tener los siguientes valores: <br>BF: Indicará el mejor ajuste (Best Fit)<br>FF: Utilizará el primer ajuste (First Fit)<br>WF: Utilizará el peor ajuste (Worst Fit)<br>Ya que es opcional, se tomará el primer ajuste si no está especificado en el comando. Si se utiliza otro valor que no sea alguno de los anteriores mostrará un mensaje de error. |
 | -u        | Opcional    | Este parámetro recibirá una letra que indicará las unidades que utilizará el parámetro size. Podrá tener los siguientes valores:<br>k que indicará que se utilizarán Kilobytes (1024 bytes)<br>m en el que se utilizarán Megabytes (1024 * 1024 bytes)<br>Este parámetro es opcional, si no se encuentra se creará un disco con tamaño en Megabytes. Si se utiliza otro valor debe mostrarse un mensaje de error.                                   |
 | -path     | Obligatorio | Este parámetro será la ruta en el que se creará el archivo que representará el disco duro. Si las carpetas de la ruta no existen deberán crearse. 
+
+#### 2. RMKDISK
+
+Este parámetro elimina un archivo que representa a un disco duro mostrando un mensaje de confirmación para eliminar. Tendrá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                                                                              |
+|-----------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -path     | Obligatorio | Este parámetro será la ruta en el que se eliminará el archivo que representará el disco duro. Si el archivo no existe, debe mostrar un mensaje de error. |
+
+### 📜 Script
+
+#### 1. EXEC
+
+El programa podrá ejecutar scripts con el comando exec. Debe mostrar el contenido de la línea que está leyendo y su resultado. También debe mostrar los comentarios del script.
+
+| Parámetro | Categoría   | Descripción                                           |
+|-----------|-------------|-------------------------------------------------------|
+| -path     | Obligatorio | Especifica el nombre del script que se va a ejecutar. |
