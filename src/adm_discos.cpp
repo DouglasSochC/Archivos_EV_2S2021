@@ -64,8 +64,5 @@ void adm_discos::mkdisk(map<string, string> param_got){
         fwrite(&temp_mbr, csnt_admdcs.SIZE_MBR, 1, file);
         fclose(file);
     }
-    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La creacion del disco ha sido exitosa" << endl;
-    if (!comentario.empty()){
-        cout << csnt_admdcs.BLUE << comentario << endl;
-    }    
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La creacion del disco ha sido exitosa " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
 }

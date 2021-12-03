@@ -4,6 +4,7 @@
 #include "../util/util_p.h"
 #include "../util/constant.h"
 #include "../src/adm_discos.h"
+#include "../src/script_adm.h"
 #include "parameters.h"
 
 using namespace std;
@@ -12,6 +13,7 @@ util_p util_scnr;
 constant cnst_scnr;
 parameters prmts_scnr;
 adm_discos admdcs_scnr;
+script_adm scrp_scnr;
 
 void scanner::init(){
     
@@ -64,6 +66,9 @@ void scanner::exec_command(vector<string> tokens){
         }else if (comando == "mkdisk"){
             map<string, string> param_got = prmts_scnr.param_mkdisk(tokens);
             admdcs_scnr.mkdisk(param_got);
+        }else if(comando == "exec"){
+            map<string, string> param_got = prmts_scnr.param_exec(tokens);
+            scrp_scnr.exec(param_got);
         }else{
             cout << cnst_scnr.RED << "ERROR:" << cnst_scnr.NC << " No existe el comando " << comando << endl;
         }

@@ -22,7 +22,7 @@ El proyecto fue desarrollado en una distribucion GNU/Linux
 
 Compilar el proyecto
 ```console
-~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" -o main
+~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" -o main
 ```
 
 Ejecutar archivo compilado
