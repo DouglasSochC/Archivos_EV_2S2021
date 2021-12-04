@@ -14,6 +14,7 @@ util_p util_admdcs;
 constant csnt_admdcs;
 const string PATH_TEMP  = "/tmp/douglas/Disco1.disk"; //Eliminar antes de ultimo push
 
+//INI - METODOS PRINCIPALES
 void adm_discos::mkdisk(map<string, string> param_got){
     if (param_got.size() == 0)
     {
@@ -136,6 +137,7 @@ void adm_discos::fdisk(map<string, string> param_got){
             }
         }else{
             cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe una particion con el nombre '" << name << "' " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+            return;
         }
     }else if(add_p != 0){
         if (foundName != '\0'){
@@ -146,15 +148,215 @@ void adm_discos::fdisk(map<string, string> param_got){
             }
         }else{
             cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe una particion con el nombre '" << name << "' " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+            return;
         }
     }else{        
         if (foundName == '\0'){
-            
+            fdisk_createPrimaryExtended(mbr, fit, type, size, name, path);
+            fdisk_createLogic(mbr, fit, type, size, name, path);
         }else{
             cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " Ya existe una particion con el nombre '" << name << "' " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+            return;
         }
     }
+    cout << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    return;
 }
+//FIN - METODOS PRINCIPALES
+
+//INI - SUB-METODOS
+void adm_discos::fdisk_createPrimaryExtended(disco::MBR mbr, char part_fit, char part_type, int part_size, string part_name, string path){
+    if (part_type == 'L'){
+        return;
+    }
+    vector<disco::Partition> getPartitions = getListPartitionsEP(mbr);
+    //Validando que solo halla una extendida
+    int acum = 0;
+    for (int i = 0; i < getPartitions.size(); i++){
+        if (getPartitions[i].part_type == 'E'){
+            acum++;
+            break;
+        }
+    }
+    if (acum > 0 && part_type == 'E'){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se puede crear mas de 1 particion extendida ";
+        return;
+    }
+
+    //Construyendo el listado de espacios entre particiones
+    vector<disco::Fit> listFit;
+    disco::Fit tmpFit;
+    if (getPartitions.size() > 0){
+        tmpFit.start = csnt_admdcs.SIZE_MBR;
+        tmpFit.size = getPartitions[0].part_start - csnt_admdcs.SIZE_MBR;
+        listFit.push_back(tmpFit);
+        for (int i = 0; i < getPartitions.size(); i++){
+            if (i < (getPartitions.size()-1)){
+                tmpFit.start = getPartitions[i].part_start + getPartitions[i].part_size;
+                tmpFit.size = getPartitions[i+1].part_start - tmpFit.start;
+                listFit.push_back(tmpFit);
+            }else{
+                tmpFit.start = getPartitions[i].part_start + getPartitions[i].part_size;
+                tmpFit.size = mbr.mbr_tamano - tmpFit.start;
+                listFit.push_back(tmpFit);
+            }
+        }
+        tmpFit.start = mbr.mbr_tamano;
+        tmpFit.size = 0;
+        listFit.push_back(tmpFit);        
+    }else{
+        tmpFit.start = csnt_admdcs.SIZE_MBR;
+        tmpFit.size = mbr.mbr_tamano - csnt_admdcs.SIZE_MBR;
+        listFit.push_back(tmpFit);
+        tmpFit.start = mbr.mbr_tamano;
+        tmpFit.size = 0;
+        listFit.push_back(tmpFit);
+    }
+    int response_Position = assign_positionByFit(listFit, part_size, mbr.disk_fit);
+    if (response_Position == -1){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha podido realizar correctamente el ajuste ";
+        return;
+    }else if(response_Position == -2){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No hay suficiente espacio para crear la particion ";
+        return;
+    }
+
+    //Se crea una estructura temporal de tipo particion la cual se almacenara
+    disco::Partition temp_partition;
+    temp_partition.part_status = '1';
+    temp_partition.part_type = part_type;
+    temp_partition.part_fit = part_fit;
+    temp_partition.part_start = response_Position;
+    temp_partition.part_size = part_size;
+    strcpy(temp_partition.part_name, part_name.c_str());
+
+    //Se asigna la particion nueva a una particion del MBR que no se este utilizando
+    if (mbr.mbr_partition_1.part_status == '0'){
+        mbr.mbr_partition_1 = temp_partition;
+    }else if(mbr.mbr_partition_2.part_status == '0'){
+        mbr.mbr_partition_2 = temp_partition;
+    }else if(mbr.mbr_partition_3.part_status == '0'){
+        mbr.mbr_partition_3 = temp_partition;
+    }else if(mbr.mbr_partition_4.part_status == '0'){
+        mbr.mbr_partition_4 = temp_partition;
+    }else{
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " Se ha llegado al limite de particiones (4) ";
+        return;
+    }
+    
+    //Ahora ya se almacenan la nueva particion en el disco
+    FILE *save = fopen(path.c_str(), "rb+");
+    fwrite(&mbr, csnt_admdcs.SIZE_MBR, 1, save);
+    fclose(save);
+
+    if (part_type == 'E'){
+        if (fdisk_createLogicInit(temp_partition, path) == -1){return;}        
+    }
+    string type_partition = (part_type == 'E') ? "extendida": "primaria";
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha creado correctamente la particion " << type_partition << " ";
+}
+
+int adm_discos::fdisk_createLogicInit(disco::Partition partition, string path){
+    disco::EBR tempEBR;
+    strcpy(tempEBR.part_name, "Vacio");
+    FILE *file = fopen(path.c_str(), "rb+");
+    if (file){
+        fseek(file, partition.part_start, SEEK_SET);
+        fwrite(&tempEBR, csnt_admdcs.SIZE_EBR, 1, file);
+        fclose(file);
+    }else{
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha realizado la particion logica inicial correctamente ";
+        return -1;
+    }
+    return 0;
+}
+
+void adm_discos::fdisk_createLogic(disco::MBR mbr, char part_fit, char part_type, int part_size, string part_name, string path){
+    if (part_type != 'L'){
+        return;
+    }
+
+    //Validando que exista una particion extendida
+    vector<disco::Partition> getPartitions = getListPartitionsEP(mbr);
+    int index = -1;
+    for (int i = 0; i < getPartitions.size(); i++){
+        if (getPartitions[i].part_type == 'E'){
+            index = i;
+            break;
+        }
+    }
+    if (index == -1){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se puede crear una particion logica si no hay una extendida ";
+        return;
+    }
+
+    //Construimos el listado de los ajustes para las particiones
+    disco::Partition partitionExtended = getPartitions[index];
+    vector<disco::Fit> listFit;
+    disco::Fit tmpFit;
+    vector<disco::EBR> listEBR = getListPartitionsL(partitionExtended, path);
+    if (listEBR.size() > 0){
+        tmpFit.start = partitionExtended.part_start;
+        tmpFit.size = listEBR[0].part_start - partitionExtended.part_start;
+        listFit.push_back(tmpFit);
+        for (int i = 0; i < listEBR.size(); i++){
+            if (i < (listEBR.size()-1)){
+                tmpFit.start = listEBR[i].part_start + listEBR[i].part_size;
+                tmpFit.size = listEBR[i+1].part_start - tmpFit.start;
+                listFit.push_back(tmpFit);
+            }else{
+                tmpFit.start = listEBR[i].part_start + listEBR[i].part_size;
+                tmpFit.size = (partitionExtended.part_start + partitionExtended.part_size) - tmpFit.start;
+                listFit.push_back(tmpFit);
+            }
+        }
+        tmpFit.start = partitionExtended.part_start + partitionExtended.part_size;
+        tmpFit.size = 0;
+        listFit.push_back(tmpFit);        
+    }else{
+        tmpFit.start = partitionExtended.part_start;
+        tmpFit.size = partitionExtended.part_size;
+        listFit.push_back(tmpFit);
+        tmpFit.start = partitionExtended.part_start + partitionExtended.part_size;
+        tmpFit.size = 0;
+        listFit.push_back(tmpFit);
+    }
+    
+    int response_Position = assign_positionByFit(listFit, part_size, partitionExtended.part_fit);
+    if (response_Position == -1){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha podido realizar correctamente el ajuste ";
+        return;
+    }else if(response_Position == -2){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No hay suficiente espacio para crear la particion logica ";
+        return;
+    }
+
+    //Se crea una estructura temporal de EBR
+    disco::EBR tempEBR;
+    tempEBR.part_status = '1';
+    tempEBR.part_fit = part_fit;
+    tempEBR.part_start = response_Position;
+    tempEBR.part_size = part_size;
+    strcpy(tempEBR.part_name, part_name.c_str());
+
+    //Se obtiene los EBR que estan antes y despues del actual que se va a ingresar
+    int before_logic = -1;
+    int after_logic = -1;
+    getBA_PartitionL(partitionExtended, path, tempEBR.part_start, &before_logic, &after_logic);
+    if (before_logic != -1){
+        edit_beforeEBR(before_logic, tempEBR.part_start, path);
+    }
+    tempEBR.part_next = after_logic;
+
+    //Ahora ya se almacenan los datos de las nuevas particiones, en el disco
+    FILE *save = fopen(path.c_str(), "rb+");
+    fseek(save, tempEBR.part_start, SEEK_SET);
+    fwrite(&tempEBR, csnt_admdcs.SIZE_EBR, 1, save);
+    fclose(save);
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha creado correctamente la particion logica ";
+}
+//FIN - SUB-METODOS
+
 
 disco::MBR adm_discos::getMBR(string path){
     disco::MBR response;
@@ -169,9 +371,6 @@ disco::MBR adm_discos::getMBR(string path){
     return response;
 }
 
-/*
-Return type of partition if name is found case opposite returns \0
-*/
 char adm_discos::find_namePartition(string name, string path){
     
     char response = '\0';
@@ -203,9 +402,6 @@ char adm_discos::find_namePartition(string name, string path){
     return response;
 }
 
-/*
-Get partitions extended and primary where status = 1
-*/
 vector<disco::Partition> adm_discos::getListPartitionsEP(disco::MBR mbr){
     vector<disco::Partition> response;
     map<int, disco::Partition> tempMap;
@@ -229,9 +425,6 @@ vector<disco::Partition> adm_discos::getListPartitionsEP(disco::MBR mbr){
     return response;
 }
 
-/*
-Get partitions logics where status = 1
-*/
 vector<disco::EBR> adm_discos::getListPartitionsL(disco::Partition partition, string path){
     vector<disco::EBR> response;
     disco::EBR tempEBR;
@@ -260,14 +453,6 @@ vector<disco::EBR> adm_discos::getListPartitionsL(disco::Partition partition, st
     return response;
 }
 
-
-/*
-This function get a vector of the struct Fit, the struct helps
-return the next values:
--1 = Error
--2 = There isn't enough space
-Its function principal is assign a position 
-*/
 int adm_discos::assign_positionByFit(vector<disco::Fit> list_Of_Fits, int size_new_partition, char fit){
     int response = -1;
     if (list_Of_Fits.size() <= 0){
@@ -302,17 +487,51 @@ int adm_discos::assign_positionByFit(vector<disco::Fit> list_Of_Fits, int size_n
     return response;
 }
 
+void adm_discos::getBA_PartitionL(disco::Partition partition_extended, string path, int actual, int *before, int *after){
+    vector<disco::EBR> listLogics = getListPartitionsL(partition_extended, path);
+    if (listLogics.size() <= 0){
+        *before = -1;
+        *after = -1;
+        return;
+    }
+    if (partition_extended.part_start == actual){
+        *before = -1;
+        *after = listLogics[0].part_start;
+        return;
+    }
+    for (int i = 0; i < listLogics.size(); i++){
+        int next = listLogics[i].part_start + listLogics[i].part_size;
+        if (next == actual){
+            *before = listLogics[i].part_start;
+            *after = (i+1 <= listLogics.size()-1) ? listLogics[i+1].part_start: -1;
+            break;
+        }        
+    }
+}
+
+void adm_discos::edit_beforeEBR(int part_start, int part_next, string path){
+    disco::EBR tempEBR;
+    FILE *file = fopen(path.c_str(), "rb+");
+    fseek(file, part_start, SEEK_SET);
+    fread(&tempEBR, csnt_admdcs.SIZE_EBR, 1, file);
+    tempEBR.part_next = part_next;
+    fseek(file, part_start, SEEK_SET);
+    fwrite(&tempEBR, csnt_admdcs.SIZE_EBR, 1, file);
+    fclose(file);
+}
+
+//METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
 void adm_discos::test_asignacionFit(){
-    char fit = 'B';
+    char fit = 'W';
     int size_temp = 100;
     vector<disco::Fit> list_fit;
     disco::Fit tempFit;
     tempFit.name = "nombre 1";
-    tempFit.start = 10000;
+    tempFit.start = 1000000;
     tempFit.size = tempFit.start;
     list_fit.push_back(tempFit);
     tempFit.name = "nombre 2";
-    tempFit.start = 5000;
+    tempFit.start = 5200000;
     tempFit.size = tempFit.start;
     list_fit.push_back(tempFit);
     tempFit.name = "nombre 3";
@@ -328,15 +547,15 @@ void adm_discos::test_asignacionFit(){
     tempFit.size = tempFit.start;
     list_fit.push_back(tempFit);
     tempFit.name = "nombre 6";
-    tempFit.start = 400;
+    tempFit.start = 99;
     tempFit.size = tempFit.start;
     list_fit.push_back(tempFit);
     tempFit.name = "nombre 7";
-    tempFit.start = 400;
+    tempFit.start = 300;
     tempFit.size = tempFit.start;
     list_fit.push_back(tempFit);
     tempFit.name = "nombre 8";
-    tempFit.start = 1234;
+    tempFit.start = 100000;
     tempFit.size = tempFit.start;
     list_fit.push_back(tempFit);
 
@@ -345,9 +564,10 @@ void adm_discos::test_asignacionFit(){
         cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha podido realizar correctamente el ajuste" << endl;
         return;
     }else if(response_Position == -2){
-        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No hay suficiente espacio para crear la particion logica" << endl;
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No hay suficiente espacio para crear la particion" << endl;
         return;
     }
     cout << "RESPONSE:" << response_Position << endl;
 
 }
+
