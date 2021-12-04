@@ -15,6 +15,7 @@ public:
     bool check_correctExtFile(string path);
     bool check_correctExtEXEC(string path);
     bool check_existFile(string path);
+    float round(float valor);
 
     void createDirectory(string path);
     bool existFile(string path);

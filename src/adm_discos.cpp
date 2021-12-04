@@ -14,6 +14,9 @@ util_p util_admdcs;
 constant csnt_admdcs;
 const string PATH_TEMP  = "/tmp/douglas/Disco1.disk"; //Eliminar antes de ultimo push
 
+//RECORDAR:
+//1. Siempre hay que validar si el path inicia con " para que funcione correctamente
+
 //INI - METODOS PRINCIPALES
 void adm_discos::mkdisk(map<string, string> param_got){
     if (param_got.size() == 0)
@@ -142,9 +145,9 @@ void adm_discos::fdisk(map<string, string> param_got){
     }else if(add_p != 0){
         if (foundName != '\0'){
             if (foundName == 'P' || foundName == 'E'){
-                
+                fdisk_addPrimaryExtended(add_p, mbr, path, name);
             }else if(foundName == 'L'){
-                
+                fdisk_addLogic(add_p, mbr, path, name);
             }
         }else{
             cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe una particion con el nombre '" << name << "' " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
@@ -420,6 +423,111 @@ void adm_discos::fdisk_deleteLogic(string delete_p, disco::MBR mbr, string path,
         fclose(save);
     }
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha eliminado correctamente la particion logica ";
+}
+
+void adm_discos::fdisk_addPrimaryExtended(int add_p, disco::MBR mbr, string path, string name){
+    
+    //Se almacena el listado de las particiones del MBR
+    vector<disco::Partition> listTemp;
+    listTemp.push_back(mbr.mbr_partition_1);
+    listTemp.push_back(mbr.mbr_partition_2);
+    listTemp.push_back(mbr.mbr_partition_3);
+    listTemp.push_back(mbr.mbr_partition_4);
+
+    //Se obtiene la particion segun el nombre ingresado por el usuario
+    int before = -1;
+    int after = -1;
+    disco::Partition actualPartition = getPartitionEP(mbr,name, &before, &after);
+    
+    string type;
+    string concepto;
+    bool validate = false;
+    for (int i = 0; i < listTemp.size(); i++){
+        if (listTemp[i].part_start == actualPartition.part_start){
+            if (add_p >= 0){
+                //Verifica el inicio de la siguiente particion o el tamaño del disco
+                int pos_tope = (i+1 <= listTemp.size()-1) ? listTemp[i+1].part_start: mbr.mbr_tamano;
+                int pos_new = listTemp[i].part_start + listTemp[i].part_size + add_p;
+                if (pos_new <= pos_tope){
+                    listTemp[i].part_size = listTemp[i].part_size + add_p;
+                    validate = true;
+                    break;
+                }
+            }else{
+                //Debe de verificar el inicio de la particion
+                int pos_tope = listTemp[i].part_start;
+                int pos_new = listTemp[i].part_start + listTemp[i].part_size + add_p;
+                //Si se quiere dejar una particion con tamaño de 0 se debe poner >= enves de >
+                if (pos_new > pos_tope){
+                    listTemp[i].part_size = listTemp[i].part_size + add_p;
+                    validate = true;
+                    break;
+                }
+            }
+        }
+    }
+    type = (type == "P")?"primaria":"extendida";
+    concepto = (add_p >= 0) ? "aumentado": "disminuido";
+    if (!validate){
+        concepto = concepto == "aumentado"? "aumentado correctamente la particion por falta de espacio": "disminuido correctamente la particion debido a que se excede los limites del inicio de la particion";
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha " << concepto << " ";
+        return;
+    }
+    
+    mbr.mbr_partition_1 = listTemp[0];
+    mbr.mbr_partition_2 = listTemp[1];
+    mbr.mbr_partition_3 = listTemp[2];
+    mbr.mbr_partition_4 = listTemp[3];
+    FILE *save = fopen(path.c_str(), "rb+");
+    fseek(save, 0, SEEK_SET);
+    fwrite(&mbr, csnt_admdcs.SIZE_MBR, 1, save);
+    fclose(save);
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha " << concepto << " correctamente la particion " << type << " ";
+}
+
+void adm_discos::fdisk_addLogic(int add_p, disco::MBR mbr, string path, string name){
+
+    disco::Partition partititionExtended;
+    partititionExtended = (mbr.mbr_partition_1.part_type == 'E') ? mbr.mbr_partition_1: partititionExtended;
+    partititionExtended = (mbr.mbr_partition_2.part_type == 'E') ? mbr.mbr_partition_2: partititionExtended;
+    partititionExtended = (mbr.mbr_partition_3.part_type == 'E') ? mbr.mbr_partition_3: partititionExtended;
+    partititionExtended = (mbr.mbr_partition_4.part_type == 'E') ? mbr.mbr_partition_4: partititionExtended;
+
+    int before = -1;
+    disco::EBR actualPartition = getPartitionL(partititionExtended, path, name, &before);
+    string concepto;
+    bool validate = false;
+    if (add_p >= 0){
+        //Verifica el inicio de la siguiente particion
+        int pos_tope = (actualPartition.part_next != -1) ? actualPartition.part_next: (partititionExtended.part_start + partititionExtended.part_size);
+        int pos_new = actualPartition.part_start + actualPartition.part_size + add_p;
+        if (pos_new <= pos_tope){
+            actualPartition.part_size = actualPartition.part_size + add_p;
+            validate = true;
+        }
+    }else{
+        //Se obtiene el inicio de la particion actual en el cual se modificara su tamaño
+        int pos_tope = actualPartition.part_start;
+        int pos_new = actualPartition.part_start + actualPartition.part_size + add_p;
+        //Si se quiere dejar una particion con tamaño de 0 se debe poner >= enves de >
+        if (pos_new > pos_tope){
+            actualPartition.part_size = actualPartition.part_size + add_p;
+            validate = true;
+        }
+    }
+
+    concepto = (add_p > 0) ? "aumentado": "disminuido";
+    if (!validate){
+        concepto = concepto == "aumentado"? "aumentado correctamente la particion por falta de espacio": "disminuido correctamente la particion debido a que se excede los limites del inicio de la particion";
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha " << concepto << " ";
+        return;
+    }
+
+    FILE *save = fopen(path.c_str(), "rb+");
+    fseek(save, actualPartition.part_start, SEEK_SET);
+    fwrite(&actualPartition, csnt_admdcs.SIZE_EBR, 1, save);
+    fclose(save);
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha " << concepto << " correctamente la particion logica ";
 }
 //FIN - SUB-METODOS
 

@@ -114,3 +114,10 @@ void util_p::createDirectory(string path){
     string comando = "mkdir -p \"" + path.substr(0, posicion+1) + "\"";
     system(comando.c_str());
 }
+
+float util_p::round(float valor){
+    char str[40];
+    sprintf(str, "%.2f", valor);
+    sscanf(str, "%f", &valor); 
+    return valor;
+}
