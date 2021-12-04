@@ -75,6 +75,8 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "exec"){
             map<string, string> param_got = prmts_scnr.param_exec(tokens);
             scrp_scnr.exec(param_got);
+        }else if(comando == "test1"){
+            admdcs_scnr.test_asignacionFit();
         }else{
             cout << cnst_scnr.RED << "ERROR:" << cnst_scnr.NC << " No existe el comando " << comando << endl;
         }
