@@ -19,6 +19,8 @@ public:
     void fdisk_createPrimaryExtended(disco::MBR mbr, char part_fit, char part_type, int size, string name, string path);
     int fdisk_createLogicInit(disco::Partition partition, string path);
     void fdisk_createLogic(disco::MBR mbr, char part_fit, char part_type, int part_size, string part_name, string path);
+    void fdisk_deletePrimaryExtended(string delete_p, disco::MBR mbr, string path, string name);
+    void fdisk_deleteLogic(string delete_p, disco::MBR mbr, string path, string name);
 
     //AUXILIARES
     /*
@@ -65,6 +67,16 @@ public:
     Edits a before EBR of one selected
     */
     void edit_beforeEBR(int pos_ini, int part_next, string path);
+
+    /*
+    Get partition logic where status is = 1
+    */
+    disco::EBR getPartitionL(disco::Partition partition_extended, string path, string name, int *before);
+
+    /*
+    Get partition extended or primary where status is = 1
+    */
+    disco::Partition getPartitionEP(disco::MBR mbr, string name, int *before, int *after);
 
     //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
     void test_asignacionFit();

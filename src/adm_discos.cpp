@@ -131,9 +131,9 @@ void adm_discos::fdisk(map<string, string> param_got){
     if (!delete_p.empty()){
         if (foundName != '\0'){
             if (foundName == 'P' || foundName == 'E'){
-                
+                fdisk_deletePrimaryExtended(delete_p, mbr, path, name);
             }else if(foundName == 'L'){
-                
+                fdisk_deleteLogic(delete_p, mbr, path, name);
             }
         }else{
             cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe una particion con el nombre '" << name << "' " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
@@ -355,9 +355,75 @@ void adm_discos::fdisk_createLogic(disco::MBR mbr, char part_fit, char part_type
     fclose(save);
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha creado correctamente la particion logica ";
 }
+
+void adm_discos::fdisk_deletePrimaryExtended(string delete_p, disco::MBR mbr, string path, string name){
+    
+    vector<disco::Partition> listTemp;
+    listTemp.push_back(mbr.mbr_partition_1);
+    listTemp.push_back(mbr.mbr_partition_2);
+    listTemp.push_back(mbr.mbr_partition_3);
+    listTemp.push_back(mbr.mbr_partition_4);
+
+    int before = -1;
+    int after = -1;
+    disco::Partition actualPartition = getPartitionEP(mbr, name, &before, &after);
+    string type;
+    for (int i = 0; i < listTemp.size(); i++){
+        if (listTemp[i].part_start == actualPartition.part_start){
+            type = listTemp[i].part_type;
+            disco::Partition newPartition;
+            listTemp[i] = newPartition;            
+            break;
+        }
+    }
+    mbr.mbr_partition_1 = listTemp[0];
+    mbr.mbr_partition_2 = listTemp[1];
+    mbr.mbr_partition_3 = listTemp[2];
+    mbr.mbr_partition_4 = listTemp[3];
+    FILE *save = fopen(path.c_str(), "rb+");
+    fseek(save, 0, SEEK_SET);
+    fwrite(&mbr, csnt_admdcs.SIZE_MBR, 1, save);
+    fclose(save);
+    type = (type == "P")?"primaria":"extendida";
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha eliminado correctamente la particion " << type << " ";
+}
+
+void adm_discos::fdisk_deleteLogic(string delete_p, disco::MBR mbr, string path, string name){
+
+    //Buscamos la particion extendida
+    disco::Partition partititionExtended;
+    partititionExtended = (mbr.mbr_partition_1.part_type == 'E') ? mbr.mbr_partition_1: partititionExtended;
+    partititionExtended = (mbr.mbr_partition_2.part_type == 'E') ? mbr.mbr_partition_2: partititionExtended;
+    partititionExtended = (mbr.mbr_partition_3.part_type == 'E') ? mbr.mbr_partition_3: partititionExtended;
+    partititionExtended = (mbr.mbr_partition_4.part_type == 'E') ? mbr.mbr_partition_4: partititionExtended;
+
+    //Se obtiene la particion logica que se va a eliminar
+    int before = -1;
+    disco::EBR actualLogic = getPartitionL(partititionExtended, path, name, &before);
+    if (before != -1){
+        edit_beforeEBR(before, actualLogic.part_next, path);
+    }
+    if (partititionExtended.part_start == actualLogic.part_start){
+        //Aqui se deshabilita la particion logica que se encuentra al inicio de la particion extendida
+        FILE *save = fopen(path.c_str(), "rb+");
+        actualLogic.part_status = '0';
+        actualLogic.part_size = 0;
+        fseek(save, actualLogic.part_start, SEEK_SET);
+        fwrite(&actualLogic, csnt_admdcs.SIZE_EBR, 1, save);
+        fclose(save);
+    }else{
+        //Aqui se deshabilita la particion posterior a la particion del inicio
+        FILE *save = fopen(path.c_str(), "rb+");
+        disco::EBR newEBR;
+        fseek(save, actualLogic.part_start, SEEK_SET);
+        fwrite(&newEBR, csnt_admdcs.SIZE_EBR, 1, save);
+        fclose(save);
+    }
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha eliminado correctamente la particion logica ";
+}
 //FIN - SUB-METODOS
 
-
+//INIT - METODOS AUXILIARES
 disco::MBR adm_discos::getMBR(string path){
     disco::MBR response;
     FILE *file = fopen(path.c_str(), "rb");
@@ -512,13 +578,62 @@ void adm_discos::getBA_PartitionL(disco::Partition partition_extended, string pa
 void adm_discos::edit_beforeEBR(int part_start, int part_next, string path){
     disco::EBR tempEBR;
     FILE *file = fopen(path.c_str(), "rb+");
+    //Se obtiene el EBR
     fseek(file, part_start, SEEK_SET);
     fread(&tempEBR, csnt_admdcs.SIZE_EBR, 1, file);
+    //Se modifica su next
     tempEBR.part_next = part_next;
+    //Se sobrescribe
     fseek(file, part_start, SEEK_SET);
     fwrite(&tempEBR, csnt_admdcs.SIZE_EBR, 1, file);
     fclose(file);
 }
+
+disco::EBR adm_discos::getPartitionL(disco::Partition partition_extended, string path, string name, int *before){
+    
+    disco::EBR response;
+    FILE *file = fopen(path.c_str(), "rb+");
+    fseek(file, partition_extended.part_start, SEEK_SET);
+    fread(&response, csnt_admdcs.SIZE_EBR, 1, file);
+    while (true){
+        if (response.part_status != '0'){
+            if (response.part_name == name){
+                break;
+            }else{
+                *before = response.part_start;
+                if (response.part_next == -1){
+                    break;
+                }
+                fseek(file, response.part_next, SEEK_SET);
+                fread(&response, csnt_admdcs.SIZE_EBR, 1, file);
+            }
+        }else{
+            if (response.part_next == -1){
+                break;
+            }else{
+                *before = response.part_start;
+                fseek(file, response.part_next, SEEK_SET);
+                fread(&response, csnt_admdcs.SIZE_EBR, 1, file);
+            }
+        }
+    }
+    return response;
+}
+
+disco::Partition adm_discos::getPartitionEP(disco::MBR mbr, string name, int *before, int *after){
+    disco::Partition response;
+    vector<disco::Partition> listPartitions = getListPartitionsEP(mbr);
+    for (int i = 0; i < listPartitions.size(); i++){
+        *before = (i-1) >= 0 ? listPartitions[i-1].part_start: -1;
+        if (listPartitions[i].part_name == name){
+            response = listPartitions[i];
+            *after = (listPartitions.size()-1) >= (i+1) ? listPartitions[i+1].part_start: -1;
+            break;
+        }        
+    }    
+    return response;
+}
+//FIN - METODOS AUXILIARES
 
 //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
 void adm_discos::test_asignacionFit(){
