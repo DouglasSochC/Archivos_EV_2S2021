@@ -117,7 +117,7 @@ void util_p::createDirectory(string path){
 
 float util_p::round(float valor){
     char str[40];
-    sprintf(str, "%.2f", valor);
+    sprintf(str, "%.3f", valor);
     sscanf(str, "%f", &valor); 
     return valor;
 }

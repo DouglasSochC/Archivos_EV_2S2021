@@ -18,11 +18,16 @@ El proyecto fue desarrollado en una distribucion GNU/Linux
 ~$ g++ -v
 ```
 
+* Graphviz 2.43.0 o superior
+```console
+~$ dot -v
+```
+
 ### ⚙️ Ejecucion 
 
 Compilar el proyecto
 ```console
-~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" -o main
+~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" "src/reportes.cpp" -o main
 ```
 
 Ejecutar archivo compilado
@@ -100,3 +105,19 @@ El programa podrá ejecutar scripts con el comando exec. Debe mostrar el conteni
 | -path     | Obligatorio | Especifica el nombre del script que se va a ejecutar. |
 
 ### 📑 Reportes
+
+#### 1. REP
+
+Recibirá el nombre del reporte que se desea y lo generará con graphviz en una carpeta existente.
+
+| Parámetro | Categoría   | Descripción                                                                                                                                                                                                                   |
+|-----------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>INODE<br>JOURNALING<br>BLOCK<br>BM_INODE<br>BM_BLOCK<br>TREE<br>SB<br>FILE<br>LS<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
+| -path     | Obligatorio | Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error. Indica una carpeta y el nombre que tendrá el reporte. Si no existe la carpeta, deberá crearla. Si lleva espacios se encerrará entre comillas |
+| -id       | Obligatorio | Indica el id de la partición que se utilizará. Si el reporte es sobre la información del disco, se utilizará el disco al que pertenece la partición. Si no existe debe mostrar un error.                                      |
+
+##### 1.1 Reporte MBR
+Mostrará tablas con toda la información del MBR, así como de los EBR que se pudieron haber creado.
+
+##### 1.2 Reporte DISK
+Este reporte mostrará la estructura de las particiones, el mbr del disco y el porcentaje que cada partición o espacio libre tiene dentro del disco (La sumatoria de los porcentajes debe de ser 100%).

@@ -867,6 +867,10 @@ disco::Mount adm_discos::checkPartitionMounted(string path){
     }
     return response;
 }
+
+vector<disco::Mount> adm_discos::getListMount(){
+    return Memory_Mount;
+}
 //FIN - METODOS AUXILIARES
 
 //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH

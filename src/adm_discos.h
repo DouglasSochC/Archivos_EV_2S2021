@@ -89,6 +89,8 @@ public:
 
     disco::Mount checkPartitionMounted(string path);
 
+    vector<disco::Mount> getListMount();
+
     //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
     void test_asignacionFit();
 };

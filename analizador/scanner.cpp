@@ -4,6 +4,7 @@
 #include "../util/util_p.h"
 #include "../util/constant.h"
 #include "../src/adm_discos.h"
+#include "../src/reportes.h"
 #include "../src/script_adm.h"
 #include "parameters.h"
 
@@ -13,6 +14,7 @@ util_p util_scnr;
 constant cnst_scnr;
 parameters prmts_scnr;
 adm_discos admdcs_scnr;
+reportes rp_scnr;
 script_adm scrp_scnr;
 
 void scanner::init(){
@@ -81,6 +83,16 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "exec"){
             map<string, string> param_got = prmts_scnr.param_exec(tokens);
             scrp_scnr.exec(param_got);
+        }else if(comando == "rep"){
+            map<string, string> param_got = prmts_scnr.param_rep(tokens);
+            if (param_got.size() > 0){
+                string name_report = param_got["-name"].c_str();
+                if (name_report == "mbr"){
+                    rp_scnr.mbr(param_got, admdcs_scnr.getListMount());
+                }else if(name_report == "disk"){
+                    rp_scnr.disk(param_got, admdcs_scnr.getListMount());
+                }
+            }
         }else if(comando == "test1"){
             admdcs_scnr.test_asignacionFit();
         }else{
