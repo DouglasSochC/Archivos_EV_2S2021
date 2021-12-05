@@ -72,6 +72,12 @@ void scanner::exec_command(vector<string> tokens){
         }else if (comando == "fdisk"){            
             map<string, string> param_got = prmts_scnr.param_fdisk(tokens);
             admdcs_scnr.fdisk(param_got);
+        }else if(comando == "mount"){
+            map<string, string> param_got = prmts_scnr.param_mount(tokens);
+            admdcs_scnr.mount(param_got);
+        }else if(comando == "unmount"){
+            map<string, string> param_got = prmts_scnr.param_unmount(tokens);
+            admdcs_scnr.unmount(param_got);
         }else if(comando == "exec"){
             map<string, string> param_got = prmts_scnr.param_exec(tokens);
             scrp_scnr.exec(param_got);

@@ -69,16 +69,8 @@ Este comando administra las particiones en el archivo que representa al disco du
 
 #### 4. MOUNT
 
-Este comando montará una partición del disco en el sistema e imprimira en consola un resumen de todas las particiones montadas actualmente. Cada partición se identificará por un id que tendrá la siguiente estructura utilizando el número de carnet: 
-
-*Últimos dos dígitos del Carnet + Numero + Letra
-
-Ejemplo: carnet = 201536958Id ́s = 581A, 581B, 581C, 582A, 583A
-
-Por cada partición montada, deberá imprimir una línea en consola con siguiente formato:
-Path del disco utilizado|Nombre de la partición|ID de la partición montada.
-
-El número será el misma para particiones en el mismo disco y la letra diferente para particiones en el mismo disco. (NOTA: Este Comando Debe Realizar el montaje en memoria ram no debe escribir esto en el disco) Los parámetros admitidos por este comando son:
+Este comando montará una partición del disco en el sistema. Cada partición se identificará por un id que tendrá la siguiente estructura: VD + LETRA + NUMERO.
+Por ejemplo: vda1, vda2, vdb1, vdc1… La letra será la misma para particiones en el mismo disco y el número diferente para particiones en el mismo disco. Los parámetros admitidos por este comando son:
 
 | Parámetro | Categoría   | Descripción                                                                                                             |
 |-----------|-------------|-------------------------------------------------------------------------------------------------------------------------|

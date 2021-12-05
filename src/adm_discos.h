@@ -14,6 +14,8 @@ public:
     void mkdisk(map<string, string> param_got);
     void rmdisk(map<string, string> param_got);
     void fdisk(map<string, string> param_got);
+    void mount(map<string, string> param_got);
+    void unmount(map<string, string> param_got);
 
     //SUB-METODOS
     void fdisk_createPrimaryExtended(disco::MBR mbr, char part_fit, char part_type, int size, string name, string path);
@@ -79,6 +81,13 @@ public:
     Get partition extended or primary where status is = 1
     */
     disco::Partition getPartitionEP(disco::MBR mbr, string name, int *before, int *after);
+
+    /*
+    Gets one struct of Mount that will mount in memory
+    */
+    disco::Mount partitionToMounted(string name, string path);
+
+    disco::Mount checkPartitionMounted(string path);
 
     //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
     void test_asignacionFit();

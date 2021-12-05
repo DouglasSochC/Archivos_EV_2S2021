@@ -12,7 +12,10 @@ using namespace std;
 
 util_p util_admdcs;
 constant csnt_admdcs;
+vector <disco::Mount> Memory_Mount;
 const string PATH_TEMP  = "/tmp/douglas/Disco1.disk"; //Eliminar antes de ultimo push
+
+//PENDIENTES:
 
 //RECORDAR:
 //1. Siempre hay que validar si el path inicia con " para que funcione correctamente
@@ -83,6 +86,13 @@ void adm_discos::rmdisk(map<string, string> param_got){
     /*Formateo de datos*/
     path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
 
+    /*Se verifica que no este montado su path*/
+    disco::Mount tempMount = checkPartitionMounted(path);
+    if (tempMount.status == '1'){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No puede utilizar este comando debido a que el disco esta montado " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
+    }
+
     /*Flujo del void*/
     cout << csnt_admdcs.CYAN << "ELECCION:" << csnt_admdcs.NC << " ¿Desea eliminar el archivo? S/N" << endl;
     string response;
@@ -96,10 +106,7 @@ void adm_discos::rmdisk(map<string, string> param_got){
 }
 
 void adm_discos::fdisk(map<string, string> param_got){
-    if (param_got.size() == 0)
-    {
-        return;
-    }
+    if (param_got.size() == 0){return;}
     /*Obteniendo datos*/
     string comentario = param_got["-comentario"];
     int size = atoi(param_got["-size"].c_str());
@@ -121,6 +128,13 @@ void adm_discos::fdisk(map<string, string> param_got){
         size = size * csnt_admdcs.AMOUNT_BITS * csnt_admdcs.AMOUNT_BITS;
         add_p = add_p * csnt_admdcs.AMOUNT_BITS * csnt_admdcs.AMOUNT_BITS;
     }
+
+    /*Se verifica que no este montado su path*/
+    disco::Mount tempMount = checkPartitionMounted(path);
+    if (tempMount.status == '1'){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No puede utilizar este comando debido a que el disco esta montado " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
+    }    
 
     /*Flujo de void*/
     //Obtenemos el MBR
@@ -164,6 +178,67 @@ void adm_discos::fdisk(map<string, string> param_got){
     }
     cout << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
     return;
+}
+
+void adm_discos::mount(map<string, string> param_got){
+    if (param_got.size() == 0){
+        return;
+    }
+    //Obteniendo Datos
+    string comentario = param_got["-comentario"].c_str();
+    string name = param_got["-name"].c_str();
+    string path = param_got["-path"].c_str();
+
+    //Formateo de Datos
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+    name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
+
+    //Flujo
+    disco::MBR mbr;
+    FILE *file = fopen(path.c_str(), "rb");
+    int read = fread(&mbr, csnt_admdcs.SIZE_MBR, 1, file);
+    if (read > 0){
+        fclose(file);
+    }
+
+    char foundName = find_namePartition(name, path);
+    if (foundName == 'P' || foundName == 'L'){
+        disco::Mount newMount = partitionToMounted(name, path);
+        if (newMount.status != '0'){
+            Memory_Mount.push_back(newMount);
+            cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La particion ha sido montada correctamente y se le ha asignado el siguiente id:\e[1m" << newMount.id << "\e[0m" << " "  << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        }else{
+            cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " Ya esta montada la particion " << name << " " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        }        
+    }else if(foundName == 'E'){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se puede montar una particion extendida " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }else{
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe la particion que desea montar" << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }
+}
+
+void adm_discos::unmount(map<string, string> param_got){
+    if (param_got.size() == 0){
+        return;
+    }
+    //Obteniendo Datos
+    string comentario = param_got["-comentario"].c_str();
+    string id = param_got["-id"].c_str();
+
+    //Flujo
+    bool isUnmounted = false;
+    for (int i = 0; i < Memory_Mount.size(); i++){
+        if (util_admdcs.toLowerString(Memory_Mount[i].id) == util_admdcs.toLowerString(id)){
+            isUnmounted = true;
+            Memory_Mount.erase(Memory_Mount.begin() + i);
+            break;
+        }            
+    }
+    if (isUnmounted){
+        cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " El id \e[1m" << id << "\e[0m ha sido desmontado correctamente " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }else{
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe el id que desea desmontar " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }
 }
 //FIN - METODOS PRINCIPALES
 
@@ -739,6 +814,57 @@ disco::Partition adm_discos::getPartitionEP(disco::MBR mbr, string name, int *be
             break;
         }        
     }    
+    return response;
+}
+
+disco::Mount adm_discos::partitionToMounted(string name, string path){
+    
+    disco::Mount response;
+    int partition_next = 1;
+    short code_ASCII = 97;
+    bool foundMount = false;
+    bool pathFound = false; 
+
+    for (int i = 0; i < Memory_Mount.size(); i++){
+        if (Memory_Mount[i].name == name && Memory_Mount[i].path == path){
+            response.status = '0';
+            foundMount = true;
+            break;
+        }
+        //Si encuentra un path que ya esta montado
+        if (Memory_Mount[i].path == path && Memory_Mount[i].num_partition >= partition_next){
+            code_ASCII = Memory_Mount[i].letter;
+            partition_next = Memory_Mount[i].num_partition + 1;
+            pathFound = true;
+        }
+        //Si no encuentra un path montado
+        if (Memory_Mount[i].path != path && Memory_Mount[i].letter >= code_ASCII && !pathFound){
+            code_ASCII = Memory_Mount[i].letter + 1;
+            partition_next = 1;
+        }        
+    }
+
+    char letter = code_ASCII;
+    if (!foundMount){
+        response.name = name;
+        response.path = path;
+        response.num_partition = partition_next;
+        response.letter = code_ASCII;
+        response.status = '1';
+        response.id = letter+to_string(response.num_partition);
+        response.id = "vd"+response.id;
+    }
+    return response;
+}
+
+disco::Mount adm_discos::checkPartitionMounted(string path){
+    disco::Mount response;
+    for (int i = 0; i < Memory_Mount.size(); i++){
+        if (Memory_Mount[i].path == path){
+            response = Memory_Mount[i];
+            break;
+        }
+    }
     return response;
 }
 //FIN - METODOS AUXILIARES
