@@ -43,62 +43,62 @@ public:
     } EBR;
     
     typedef struct {
-        int i_uid = -1;
-        int i_gid = -1;
-        int i_size = -1;
-        time_t i_atime;
-        time_t i_ctime;
-        time_t i_mtime;
-        int i_block[15] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-        char i_type = -1;
-        int i_perm = -1;
+        int i_uid = -1; //UID del usuario propietario del archivo o carpeta
+        int i_gid = -1; //GID del grupo al que pertenece el archivo o carpeta.
+        int i_size = -1; //Tamaño del archivo en bytes
+        time_t i_atime; //Última fecha en que se leyó el inodo sin modificarlo
+        time_t i_ctime; //Fecha en la que se creó el inodo
+        time_t i_mtime; //Ultima fecha en la que se modificó el inodo
+        int i_block[15] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}; //Registros 1-12 = Bloque Directo; Registro 13 = Bloque Simple Indirecto; Registro 14 = Bloque Doble Indirecto; Registro 15 = Bloque Triple Indirecto; Si no son utilizados tendra el valor -1
+        char i_type; //0 = Carpeta; 1 = Archivo
+        int i_perm = -1;    
     } Inode;
 
     typedef struct {
-        char b_name[12];
-        int b_inodo = -1;
+        char b_name[12]; //Nombre de la carpeta o archivo
+        int b_inodo = -1; //Apuntador hacia un inodo asociado al archivo o carpeta
     } Content;
     
     typedef struct {
-        Content b_content[4];
+        Content b_content[4]; //Array con el contenido de la carpeta
     } Folderblock;
 
     typedef struct {
-        int s_filesystem_type;
-        int s_inodes_count;
-        int s_blocks_count;
-        int s_free_blocks_count;
-        int s_free_inodes_count;
-        time_t s_mtime;
-        time_t s_umtime;
-        int s_mnt_count;
-        int s_magic = 0xEF53;
-        int s_inode_size = sizeof(Inode);
-        int s_block_size= sizeof(Folderblock);
-        int s_fist_ino = 0;
-        int s_first_blo = 0;
-        int s_bm_inode_start;
-        int s_bm_block_start;
-        int s_inode_start;
-        int s_block_start;
+        int s_filesystem_type = 0; //Guarda el numero que identifica el sistema de archivos utilizado; 1 = Ninguna; 2 = EXT2; 3 = EXT3
+        int s_inodes_count; //Guarda el número total de inodos
+        int s_blocks_count; //Guarda el número total de bloques
+        int s_free_blocks_count; //Contiene el número de bloques libres
+        int s_free_inodes_count; //Contiene el número de inodos libres
+        time_t s_mtime; //Ultima fecha en el que el sistema fue montado
+        time_t s_umtime; //Ultima fecha en que el sistema fue desmontado
+        int s_mnt_count; //Indica cuantas veces se ha montado el sistema
+        int s_magic = 0xEF53; //Valor que identifica al sistema de archivos, tendrá el valor 0xEF53
+        int s_inode_size = sizeof(Inode); //Tamaño del inodo
+        int s_block_size= sizeof(Folderblock); //Tamaño del bloque
+        int s_first_ino = 0; //Primer inodo libre
+        int s_first_blo = 0; //Primer bloque libre
+        int s_bm_inode_start; //Guardará el inicio del bitmap de inodos
+        int s_bm_block_start; //Guardará el inicio del bitmap de bloques
+        int s_inode_start; //Guardará el inicio de la tabla de inodos
+        int s_block_start; //Guardará el inico de la tabla de bloques
     } Superblock;
 
     typedef struct {
-        char operation[10] = "";
-        char type = -1; //0 = Archivo, 1 = Carpeta
-        char nombre[12] = ""; //Nombre Archivo o Directorio
-        char content[64] = "";
-        time_t date;
-        char propietario[12];
-        int permiso = 0;
+        char operation; //R = Lectura; W = Escritura; X = Ejecucion
+        char type; //0 = Archivo, 1 = Carpeta
+        char nombre[12]; //Nombre archivo o directorio
+        string content; //Datos contenidos
+        time_t date; //Fecha de transaccion
+        char propietario[10]; //Propietario de archivo o directorio
+        int permiso = -1; //Permisos que posee el archivo o directorio
     } Journaling;
 
     typedef struct {
-        char b_content[64];
+        char b_content[64]; //Array con el contenido del archivo
     } Archiveblock;
 
     typedef struct {
-        int b_pointers[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+        int b_pointers[16] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}; //Array con los apuntadores hacia bloques (de archivo o carpeta)
     } Pointerblock;
 
     typedef struct {
@@ -114,6 +114,7 @@ public:
         string name;
         string path;
         string id;
+        time_t date_mounted;
     } Mount;
 
 };

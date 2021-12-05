@@ -16,6 +16,7 @@ public:
     void fdisk(map<string, string> param_got);
     void mount(map<string, string> param_got);
     void unmount(map<string, string> param_got);
+    void mkfs(map<string, string> param_got, vector<disco::Mount> listMount);
 
     //SUB-METODOS
     void fdisk_createPrimaryExtended(disco::MBR mbr, char part_fit, char part_type, int size, string name, string path);
@@ -25,15 +26,18 @@ public:
     void fdisk_deleteLogic(string delete_p, disco::MBR mbr, string path, string name);
     void fdisk_addPrimaryExtended(int add_p, disco::MBR mbr, string path, string name);
     void fdisk_addLogic(int add_p, disco::MBR mbr, string path, string name);
+    void mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path);
+    void mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path);
     
     //AUXILIARES
     /*
-    Return struct MBR of the path
+    Return struct MBR of the path if doesn't exist return a struct MBR where mbr_tamano is = -1
+    and print a ERROR message
     */
     disco::MBR getMBR(string path);
 
     /*
-    Return type of partition if name is found case opposite returns \0
+    Return type of partition if name is found case opposite returns \\0
     */
     char find_namePartition(string name, string path);
 
@@ -88,6 +92,8 @@ public:
     disco::Mount partitionToMounted(string name, string path);
 
     disco::Mount checkPartitionMounted(string path);
+
+    disco::Mount getMountedLog(string id);
 
     vector<disco::Mount> getListMount();
 

@@ -83,6 +83,9 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "exec"){
             map<string, string> param_got = prmts_scnr.param_exec(tokens);
             scrp_scnr.exec(param_got);
+        }else if(comando == "mkfs"){
+            map<string, string> param_got = prmts_scnr.param_mkfs(tokens);
+            admdcs_scnr.mkfs(param_got, admdcs_scnr.getListMount());
         }else if(comando == "rep"){
             map<string, string> param_got = prmts_scnr.param_rep(tokens);
             if (param_got.size() > 0){
@@ -91,6 +94,8 @@ void scanner::exec_command(vector<string> tokens){
                     rp_scnr.mbr(param_got, admdcs_scnr.getListMount());
                 }else if(name_report == "disk"){
                     rp_scnr.disk(param_got, admdcs_scnr.getListMount());
+                }else if(name_report == "sb"){
+                    rp_scnr.sb(param_got, admdcs_scnr.getListMount());
                 }
             }
         }else if(comando == "test1"){

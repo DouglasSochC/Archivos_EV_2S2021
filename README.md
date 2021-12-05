@@ -90,6 +90,16 @@ Desmonta una partición del sistema. Se utilizará el id que se le asignó a la 
 |-----------|-------------|-------------------------------------------------------------------------------------------------|
 | -id       | Obligatorio | Especifica el id de la partición que se desmontará. Si no existe el id deberá mostrar un error. |
 
+#### 6. MKFS
+
+Este comando realiza un formateo completo de la partición, se formateará como ext2 por defecto si en caso el comando fs no está definido. También creará un archivo en la raíz llamado users.txt que tendrá los usuarios y contraseñas del sistema de archivos. La estructura de este archivo se explicará más adelante.
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -id       | Obligatorio | Indicará el id que se generó con el comando mount de la fase anterior. Si no existe mostrará error. Se utilizará para saber la partición y el disco que se utilizará para hacer el sistema de archivos.|
+| -type     | Opcional | Indicará que tipo de formateo se realizará. Ya que es opcional, se tomará como un formateo completo si no se especifica esta opción. Podrá tener los siguientes valores:<br>**Fast**: en este caso se realizará un formateo rápido.<br>**Full**: en este caso se realizará un formateo completo.<br> La diferencia entre estos dos tipos se explicará más adelante.|
+| -fs       | Opcional | Indica el sistema de archivos a formatear ext2 / ext3. Por defecto será ext2. Y los valores serán. 2fs para ext2 o 3fs para ext3|
+
 ### 🎎 Administracion de Usuarios y Grupos
 
 ### 📁 Administracion de Carpetas, Archivos y Permisos
@@ -112,7 +122,7 @@ Recibirá el nombre del reporte que se desea y lo generará con graphviz en una 
 
 | Parámetro | Categoría   | Descripción                                                                                                                                                                                                                   |
 |-----------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>INODE<br>JOURNALING<br>BLOCK<br>BM_INODE<br>BM_BLOCK<br>TREE<br>SB<br>FILE<br>LS<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
+| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>SB<br>JOURNALING<br>BLOCK<br>BM_INODE<br>BM_BLOCK<br>TREE<br>INODE<br>FILE<br>LS<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
 | -path     | Obligatorio | Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error. Indica una carpeta y el nombre que tendrá el reporte. Si no existe la carpeta, deberá crearla. Si lleva espacios se encerrará entre comillas |
 | -id       | Obligatorio | Indica el id de la partición que se utilizará. Si el reporte es sobre la información del disco, se utilizará el disco al que pertenece la partición. Si no existe debe mostrar un error.                                      |
 
@@ -121,3 +131,6 @@ Mostrará tablas con toda la información del MBR, así como de los EBR que se p
 
 ##### 1.2 Reporte DISK
 Este reporte mostrará la estructura de las particiones, el mbr del disco y el porcentaje que cada partición o espacio libre tiene dentro del disco (La sumatoria de los porcentajes debe de ser 100%).
+
+##### 1.3 Reporte SB
+Muestra toda la información del superbloque en una tabla.

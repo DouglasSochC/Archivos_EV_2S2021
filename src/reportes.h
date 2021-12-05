@@ -14,6 +14,7 @@ class reportes
 public:
     void mbr(map<string, string> param_got, vector<disco::Mount> list_mount);
     void disk(map<string, string> param_got, vector<disco::Mount> list_mount);
+    void sb(map<string, string> param_got, vector<disco::Mount> list_mount);
     disco::Mount getMount(string id, vector<disco::Mount> list_mount);
     void create_FileReport(string draw, string path);
 private:

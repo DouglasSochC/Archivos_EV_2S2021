@@ -18,9 +18,10 @@ const string PATH_TEMP  = "/tmp/douglas/Disco1.disk"; //Eliminar antes de ultimo
 //PENDIENTES:
 
 //RECORDAR:
-//1. Siempre hay que validar si el path inicia con " para que funcione correctamente
+//1. Siempre hay que validar si el path o el name inicia con " para que funcione correctamente
 
 //INI - METODOS PRINCIPALES
+
 void adm_discos::mkdisk(map<string, string> param_got){
     if (param_got.size() == 0)
     {
@@ -184,16 +185,16 @@ void adm_discos::mount(map<string, string> param_got){
     if (param_got.size() == 0){
         return;
     }
-    //Obteniendo Datos
+    /*Obteniendo datos*/
     string comentario = param_got["-comentario"].c_str();
     string name = param_got["-name"].c_str();
     string path = param_got["-path"].c_str();
 
-    //Formateo de Datos
+    /*Formateo de datos*/
     path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
     name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
 
-    //Flujo
+    /*Flujo de void*/
     disco::MBR mbr;
     FILE *file = fopen(path.c_str(), "rb");
     int read = fread(&mbr, csnt_admdcs.SIZE_MBR, 1, file);
@@ -221,11 +222,11 @@ void adm_discos::unmount(map<string, string> param_got){
     if (param_got.size() == 0){
         return;
     }
-    //Obteniendo Datos
+    /*Obteniendo datos*/
     string comentario = param_got["-comentario"].c_str();
     string id = param_got["-id"].c_str();
 
-    //Flujo
+    /*Flujo de void*/
     bool isUnmounted = false;
     for (int i = 0; i < Memory_Mount.size(); i++){
         if (util_admdcs.toLowerString(Memory_Mount[i].id) == util_admdcs.toLowerString(id)){
@@ -240,9 +241,94 @@ void adm_discos::unmount(map<string, string> param_got){
         cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe el id que desea desmontar " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
     }
 }
+
+void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMount){
+    if (param_got.size() == 0){
+        return;
+    }
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string id = param_got["-id"].c_str();
+    string type = param_got["-type"].c_str();
+    string fs = param_got["-fs"].c_str();
+
+    /*Flujo del void*/
+    //Se obtiene la particion que esta montada
+    disco::Mount tempMount = getMountedLog(id); 
+    if (tempMount.status == '0'){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe el id que desea desmontar " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
+    }
+    
+    //Se crean variables que se utilizaran posteriormente
+    string path = tempMount.path;
+    string name = tempMount.name;
+    time_t date_mounted = tempMount.date_mounted;
+    int part_start_partition = -1;
+    int size_partition = -1;
+
+    //Se obtiene el MBR de la particion montada
+    disco::MBR mbr = getMBR(path);
+    if (mbr.mbr_tamano == -1){
+        cout << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
+    }
+    
+    //Se verifica que tipo de particion es, para obtener sus caracteristicas
+    char foundName = find_namePartition(name, path);
+    if (foundName == 'P' || foundName == 'E'){
+        int before = -1; int after = -1;
+        disco::Partition tempPartition = getPartitionEP(mbr, name, &before, &before);
+        part_start_partition = tempPartition.part_start;
+        size_partition = tempPartition.part_size;
+    }else if(foundName == 'L'){
+        disco::Partition partitionExtended;
+        vector<disco::Partition> listPartitions = getListPartitionsEP(mbr);
+        for (int i = 0; i < listPartitions.size(); i++){
+            if (listPartitions[i].part_type == 'E'){
+                partitionExtended = listPartitions[i];
+                break;
+            }            
+        }
+        int before = -1;
+        disco::EBR tempPartition = getPartitionL(partitionExtended, path, name, &before);
+        part_start_partition = tempPartition.part_start + csnt_admdcs.SIZE_EBR;
+        size_partition = tempPartition.part_size - csnt_admdcs.SIZE_EBR;
+    }else{
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha encontrado el nombre de la particion " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
+    }
+    
+    int n_inodes;    
+    if (fs == "2fs"){
+        n_inodes = floor((size_partition - csnt_admdcs.SIZE_SPB) / (4 + csnt_admdcs.SIZE_I + 3 * csnt_admdcs.SIZE_AB));
+    }else{
+        n_inodes = floor((size_partition - csnt_admdcs.SIZE_SPB) / (4 + csnt_admdcs.SIZE_J + csnt_admdcs.SIZE_I + 3 * csnt_admdcs.SIZE_AB));
+    }
+
+    disco::Superblock temp_spb;
+    temp_spb.s_inodes_count = n_inodes;
+    //Se le resta un inodo con el fin de que no se sobrepase el espacio de la particion
+    temp_spb.s_blocks_count = 3 * n_inodes;
+    temp_spb.s_free_blocks_count = temp_spb.s_blocks_count;
+    temp_spb.s_free_inodes_count = temp_spb.s_inodes_count;
+    temp_spb.s_mtime = date_mounted;
+    temp_spb.s_umtime = 0;
+    temp_spb.s_mnt_count = 1;
+    if (fs == "2fs") {
+        temp_spb.s_filesystem_type = 2;
+        mkfs_EXT2(temp_spb, part_start_partition, path);
+    } else {
+        temp_spb.s_filesystem_type = 3;
+        mkfs_EXT3(temp_spb, part_start_partition, path);
+    }
+    cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Formateo completo de la particion realizado correctamente " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+}
+
 //FIN - METODOS PRINCIPALES
 
 //INI - SUB-METODOS
+
 void adm_discos::fdisk_createPrimaryExtended(disco::MBR mbr, char part_fit, char part_type, int part_size, string part_name, string path){
     if (part_type == 'L'){
         return;
@@ -604,9 +690,117 @@ void adm_discos::fdisk_addLogic(int add_p, disco::MBR mbr, string path, string n
     fclose(save);
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha " << concepto << " correctamente la particion logica ";
 }
+
+void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path){
+
+    //Inicio del bitmap de inodos
+    superblock.s_bm_inode_start = part_start_partition + csnt_admdcs.SIZE_SPB;
+    //Inicio del bitmap de bloques
+    superblock.s_bm_block_start = superblock.s_bm_inode_start + superblock.s_inodes_count;
+    //Inicio de la tabla de inodos
+    superblock.s_inode_start = superblock.s_bm_block_start + superblock.s_blocks_count;
+    //Inicio de la tabla de bloques
+    superblock.s_block_start = superblock.s_inode_start + (superblock.s_inodes_count * csnt_admdcs.SIZE_I);
+
+    FILE *format_partition = fopen(path.c_str(), "rb+");
+    
+    //Se almacena el superbloque
+    fseek(format_partition, part_start_partition, SEEK_SET);
+    fwrite(&superblock, csnt_admdcs.SIZE_SPB, 1, format_partition);
+    
+    char zero = '0';
+    //Seteo 0's en el bitmap de inodos
+    fseek(format_partition, superblock.s_bm_inode_start, SEEK_SET);
+    for (int i = 0; i < superblock.s_inodes_count; i++){
+        fwrite(&zero, sizeof(zero), 1, format_partition);
+    }
+    
+    //Seteo 0's en el bitmap de bloques
+    fseek(format_partition, superblock.s_bm_block_start, SEEK_SET);
+    for (int i = 0; i < superblock.s_blocks_count; i++){
+        fwrite(&zero, sizeof(zero), 1, format_partition);
+    }
+
+    //Seteo estructura-inodo al espacio de inodos
+    disco::Inode seteando_inodo;
+    fseek(format_partition, superblock.s_inode_start, SEEK_SET);
+    for (int i = 0; i < superblock.s_inodes_count; i++){
+        fwrite(&seteando_inodo, csnt_admdcs.SIZE_I, 1, format_partition);
+    }
+    
+    //Seteo estructura-block al espacio para los bloques
+    disco::Archiveblock seteando_bloque;
+    fseek(format_partition, superblock.s_block_start, SEEK_SET);
+    for (size_t i = 0; i < superblock.s_blocks_count; i++){
+        fwrite(&seteando_bloque, csnt_admdcs.SIZE_AB, 1, format_partition);
+    }    
+    
+    //Cierro el archivo de formateo
+    fclose(format_partition);
+}
+
+void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path){
+    
+    //Inicio del Journaling
+    int journaling_start = part_start_partition + csnt_admdcs.SIZE_SPB;
+    //Cantidad de Journaling
+    int total_block_journaling = superblock.s_inodes_count;
+
+    //Inicio del bitmap de inodos    
+    superblock.s_bm_inode_start = journaling_start + (total_block_journaling * csnt_admdcs.SIZE_J);
+    //Inicio del bitmap de bloques
+    superblock.s_bm_block_start = superblock.s_bm_inode_start + superblock.s_inodes_count;
+    //Inicio de la tabla de inodos
+    superblock.s_inode_start = superblock.s_bm_block_start + superblock.s_blocks_count;
+    //Inicio de la tabla de bloques
+    superblock.s_block_start = superblock.s_inode_start + (superblock.s_inodes_count * csnt_admdcs.SIZE_I);
+
+    FILE *format_partition = fopen(path.c_str(), "rb+");
+    //Se almacena la estructura de superbloque
+    fseek(format_partition, part_start_partition, SEEK_SET);
+    fwrite(&superblock, sizeof(disco::Superblock), 1, format_partition);
+
+    //Seteo de estructuras journaling
+    disco::Journaling seteando_journal;
+    for (int i = 0; i < total_block_journaling; i++){
+        fwrite(&seteando_journal, csnt_admdcs.SIZE_J, 1, format_partition);
+    }
+    
+    char zero = '0';
+    //Seteo 0's en el bitmap de inodos
+    fseek(format_partition, superblock.s_bm_inode_start, SEEK_SET);
+    for (int i = 0; i < superblock.s_inodes_count; i++){
+        fwrite(&zero, sizeof(zero), 1, format_partition);
+    }
+
+    //Seteo 0's en el bitmap de bloques
+    fseek(format_partition, superblock.s_bm_block_start, SEEK_SET);
+    for (int i = 0; i < superblock.s_blocks_count; i++){
+        fwrite(&zero, sizeof(zero), 1, format_partition);
+    }
+
+    //Seteo estructuras de tipo Inodo
+    disco::Inode seteando_inodo;
+    fseek(format_partition, superblock.s_inode_start, SEEK_SET);
+    for (int i = 0; i < superblock.s_inodes_count; i++){
+        fwrite(&seteando_inodo, csnt_admdcs.SIZE_I, 1, format_partition);
+    }
+
+    //Seteo 0's al espacio para los bloques
+    disco::Archiveblock seteando_block;
+    fseek(format_partition, superblock.s_block_start, SEEK_SET);
+    for (size_t i = 0; i < superblock.s_blocks_count; i++){
+        fwrite(&seteando_block, csnt_admdcs.SIZE_AB, 1, format_partition);
+    }
+    
+    //Cierro el archivo de formateo
+    fclose(format_partition);
+}
+
 //FIN - SUB-METODOS
 
 //INIT - METODOS AUXILIARES
+
 disco::MBR adm_discos::getMBR(string path){
     disco::MBR response;
     FILE *file = fopen(path.c_str(), "rb");
@@ -853,6 +1047,7 @@ disco::Mount adm_discos::partitionToMounted(string name, string path){
         response.status = '1';
         response.id = letter+to_string(response.num_partition);
         response.id = "vd"+response.id;
+        response.date_mounted = time(nullptr);
     }
     return response;
 }
@@ -868,12 +1063,25 @@ disco::Mount adm_discos::checkPartitionMounted(string path){
     return response;
 }
 
+disco::Mount adm_discos::getMountedLog(string id){
+    disco::Mount response;
+    for (int i = 0; i < Memory_Mount.size(); i++){
+        if (Memory_Mount[i].id == id){
+            response = Memory_Mount[i];
+            break;
+        }
+    }
+    return response;
+}
+
 vector<disco::Mount> adm_discos::getListMount(){
     return Memory_Mount;
 }
+
 //FIN - METODOS AUXILIARES
 
 //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
+
 void adm_discos::test_asignacionFit(){
     char fit = 'W';
     int size_temp = 100;
