@@ -6,16 +6,22 @@
 #include "../util/util_p.h"
 #include "../util/constant.h"
 #include "adm_discos.h"
+#include "adm_cap.h"
 #include "disco.h"
 
 using namespace std;
 
 util_p util_admdcs;
 constant csnt_admdcs;
+adm_cap admcap_admdcs;
 vector <disco::Mount> Memory_Mount;
 const string PATH_TEMP  = "/tmp/douglas/Disco1.disk"; //Eliminar antes de ultimo push
 
 //PENDIENTES:
+
+//PREGUNTAR:
+//1. A un inodo de tipo archivo se le debe de dejar un tamaño definido desde el principio?
+//O debe de seguir aumentando?
 
 //RECORDAR:
 //1. Siempre hay que validar si el path o el name inicia con " para que funcione correctamente
@@ -317,10 +323,10 @@ void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMo
     temp_spb.s_mnt_count = 1;
     if (fs == "2fs") {
         temp_spb.s_filesystem_type = 2;
-        mkfs_EXT2(temp_spb, part_start_partition, path);
+        mkfs_EXT2(temp_spb, part_start_partition, path, id, tempMount);
     } else {
         temp_spb.s_filesystem_type = 3;
-        mkfs_EXT3(temp_spb, part_start_partition, path);
+        mkfs_EXT3(temp_spb, part_start_partition, path, id, tempMount);
     }
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Formateo completo de la particion realizado correctamente " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
 }
@@ -691,7 +697,7 @@ void adm_discos::fdisk_addLogic(int add_p, disco::MBR mbr, string path, string n
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha " << concepto << " correctamente la particion logica ";
 }
 
-void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path){
+void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path, string id_mount, disco::Mount partitionMount){
 
     //Inicio del bitmap de inodos
     superblock.s_bm_inode_start = part_start_partition + csnt_admdcs.SIZE_SPB;
@@ -737,9 +743,84 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partitio
     
     //Cierro el archivo de formateo
     fclose(format_partition);
+    
+    /*En la parte superior ya se realizo el formateo del sistema de archivo ahora en la parte 
+    inferior se agrega la carpeta root y se agrega un archivo llamado user.txt*/
+    
+    //Defino una variable que almacene las estructuras en el disco
+    FILE *save_structs = fopen(path.c_str(), "rb+");
+    
+    //Ahora se crea el primer inodo el cual sera la carpeta root
+    disco::Inode inode_root;
+    inode_root.i_uid = 1;
+    inode_root.i_gid = 1;
+    inode_root.i_size = 0;
+    inode_root.i_atime = superblock.s_umtime;
+    inode_root.i_ctime = time(nullptr);
+    inode_root.i_mtime = superblock.s_umtime;
+    inode_root.i_block[0] = 0;
+    inode_root.i_type = '0';
+    inode_root.i_perm = 664;
+    //Se almacena el primer inodo en el bitmap de inodos
+    char caracter = '1';
+    fseek(save_structs, superblock.s_bm_inode_start, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el primer inodo en la tabla de inodos
+    fseek(save_structs, superblock.s_inode_start, SEEK_SET);
+    fwrite(&inode_root, csnt_admdcs.SIZE_I, 1, save_structs);
+
+    //Se crea un bloque de carpeta para la ruta "/"
+    disco::Folderblock temp_folderblock;
+    //Padre
+    strcpy(temp_folderblock.b_content[0].b_name, ".");
+    temp_folderblock.b_content[0].b_inodo = 0;
+    //Nombre de la carpeta
+    strcpy(temp_folderblock.b_content[1].b_name, "..");
+    temp_folderblock.b_content[1].b_inodo = 0;
+    //Nombre del archivo que contiene la carpeta - Apunta al inodo del archivo
+    strcpy(temp_folderblock.b_content[2].b_name, "user.txt");
+    temp_folderblock.b_content[2].b_inodo = 1;
+    //Se almacena el primer bloque en el bitmap
+    fseek(save_structs, superblock.s_bm_block_start, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el primer bloque en la tabla de bloques
+    fseek(save_structs, superblock.s_block_start, SEEK_SET);
+    fwrite(&temp_folderblock, csnt_admdcs.SIZE_FB, 1, save_structs);
+
+    //Defino los datos predeterminados que posee el archivo user.txt
+    string data = "1,G,root\n1,U,root,root,123\n";
+    //Se crea el segundo inodo el cual sera para el archivo user.txt
+    disco::Inode inode_archive;
+    inode_archive.i_uid = 1;
+    inode_archive.i_gid = 1;
+    inode_archive.i_size = data.length();
+    inode_archive.i_atime = superblock.s_umtime;
+    inode_archive.i_ctime = time(nullptr);
+    inode_archive.i_mtime = superblock.s_umtime;
+    inode_archive.i_block[0] = 1;
+    inode_archive.i_type = '1';    
+    inode_archive.i_perm = 664;
+    //Se almacena el segundo inodo en el bitmap de inodos
+    fseek(save_structs, superblock.s_bm_inode_start + 1, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el segundo inodo en la tabla de inodos
+    fseek(save_structs, superblock.s_inode_start + csnt_admdcs.SIZE_I, SEEK_SET);
+    fwrite(&inode_archive, csnt_admdcs.SIZE_I, 1, save_structs);
+
+    //Se crea un bloque de archivo
+    disco::Archiveblock temp_archiveblock;
+    //Informacion del bloque - Se ingresa la data
+    strcpy(temp_archiveblock.b_content, data.c_str());
+    //Se almacena el segundo bloque en el bitmap
+    fseek(save_structs, superblock.s_bm_block_start + 1, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el segundo bloque en la tabla de bloques
+    fseek(save_structs, superblock.s_block_start + csnt_admdcs.SIZE_AB, SEEK_SET);
+    fwrite(&temp_archiveblock, csnt_admdcs.SIZE_AB, 1, save_structs);
+    fclose(save_structs);
 }
 
-void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path){
+void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path, string id_mount, disco::Mount partitionMount){
     
     //Inicio del Journaling
     int journaling_start = part_start_partition + csnt_admdcs.SIZE_SPB;
@@ -795,6 +876,106 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partitio
     
     //Cierro el archivo de formateo
     fclose(format_partition);
+
+    /*En la parte superior ya se realizo el formateo del sistema de archivo ahora en la parte 
+    inferior se agrega la carpeta root y se agrega un archivo llamado user.txt*/
+    
+    //Defino una variable que almacene las estructuras en el disco
+    FILE *save_structs = fopen(path.c_str(), "rb+");
+    
+    //Ahora se crea el primer inodo el cual sera la carpeta root
+    disco::Inode inode_root;
+    inode_root.i_uid = 1;
+    inode_root.i_gid = 1;
+    inode_root.i_size = 0;
+    inode_root.i_atime = superblock.s_umtime;
+    inode_root.i_ctime = time(nullptr);
+    inode_root.i_mtime = superblock.s_umtime;
+    inode_root.i_block[0] = 0;
+    inode_root.i_type = '0';
+    inode_root.i_perm = 664;
+    //Se almacena el primer inodo en el bitmap de inodos
+    char caracter = '1';
+    fseek(save_structs, superblock.s_bm_inode_start, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el primer inodo en la tabla de inodos
+    fseek(save_structs, superblock.s_inode_start, SEEK_SET);
+    fwrite(&inode_root, csnt_admdcs.SIZE_I, 1, save_structs);
+
+    //Se crea un bloque de carpeta para la ruta "/"
+    disco::Folderblock temp_folderblock;
+    //Padre
+    strcpy(temp_folderblock.b_content[0].b_name, ".");
+    temp_folderblock.b_content[0].b_inodo = 0;
+    //Nombre de la carpeta
+    strcpy(temp_folderblock.b_content[1].b_name, "..");
+    temp_folderblock.b_content[1].b_inodo = 0;
+    //Nombre del archivo que contiene la carpeta - Apunta al inodo del archivo
+    strcpy(temp_folderblock.b_content[2].b_name, "user.txt");
+    temp_folderblock.b_content[2].b_inodo = 1;
+    //Se almacena el primer bloque en el bitmap
+    fseek(save_structs, superblock.s_bm_block_start, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el primer bloque en la tabla de bloques
+    fseek(save_structs, superblock.s_block_start, SEEK_SET);
+    fwrite(&temp_folderblock, csnt_admdcs.SIZE_FB, 1, save_structs);
+
+    //Se crea el journaling de la primera transaccion
+    disco::Journaling journaling1;
+    journaling1.operation = 'C';
+    journaling1.type = '0';
+    strcpy(journaling1.nombre, "/");
+    journaling1.date = time(nullptr);
+    strcpy(journaling1.propietario, "root");
+    journaling1.permiso = 664;
+    //Se almacena el journaling
+    fseek(save_structs, journaling_start, SEEK_SET);
+    fwrite(&journaling1, csnt_admdcs.SIZE_J, 1, save_structs);
+
+    //Defino los datos predeterminados que posee el archivo user.txt
+    string data = "1,G,root\n1,U,root,root,123\n";
+    //Se crea el segundo inodo el cual sera para el archivo user.txt
+    disco::Inode inode_archive;
+    inode_archive.i_uid = 1;
+    inode_archive.i_gid = 1;
+    inode_archive.i_size = data.length();
+    inode_archive.i_atime = superblock.s_umtime;
+    inode_archive.i_ctime = time(nullptr);
+    inode_archive.i_mtime = superblock.s_umtime;
+    inode_archive.i_block[0] = 1;
+    inode_archive.i_type = '1';    
+    inode_archive.i_perm = 664;
+    //Se almacena el segundo inodo en el bitmap de inodos
+    fseek(save_structs, superblock.s_bm_inode_start + 1, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el segundo inodo en la tabla de inodos
+    fseek(save_structs, superblock.s_inode_start + csnt_admdcs.SIZE_I, SEEK_SET);
+    fwrite(&inode_archive, csnt_admdcs.SIZE_I, 1, save_structs);
+
+    //Se crea un bloque de archivo
+    disco::Archiveblock temp_archiveblock;
+    //Informacion del bloque - Se ingresa la data
+    strcpy(temp_archiveblock.b_content, data.c_str());
+    //Se almacena el segundo bloque en el bitmap
+    fseek(save_structs, superblock.s_bm_block_start + 1, SEEK_SET);
+    fwrite(&caracter, sizeof(caracter), 1, save_structs);
+    //Se almacena el segundo bloque en la tabla de bloques
+    fseek(save_structs, superblock.s_block_start + csnt_admdcs.SIZE_AB, SEEK_SET);
+    fwrite(&temp_archiveblock, csnt_admdcs.SIZE_AB, 1, save_structs);
+
+    //Se crea el journaling de la segunda transaccion
+    disco::Journaling journaling2;
+    journaling2.operation = 'C';
+    journaling2.type = '1';
+    strcpy(journaling2.nombre, "user.txt");
+    journaling2.content = data;
+    journaling2.date = time(nullptr);
+    strcpy(journaling2.propietario, "root");
+    journaling2.permiso = 664;
+    //Se almacena el journaling
+    fseek(save_structs, journaling_start + csnt_admdcs.SIZE_J, SEEK_SET);
+    fwrite(&journaling2, csnt_admdcs.SIZE_J, 1, save_structs);
+    fclose(save_structs);
 }
 
 //FIN - SUB-METODOS

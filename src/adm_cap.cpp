@@ -12,7 +12,7 @@ using namespace std;
 util_p util_cap;
 constant csnt_cap;
 
-void adm_cap::mkdir(map<string, string> param_got, vector<disco::Mount> listMount){
+void adm_cap::mkdir(map<string, string> param_got, disco::Mount partitionMount, disco::User userLoggedIn){
     if (param_got.size() == 0){return;}
 
     /*Obteniendo datos*/
@@ -30,6 +30,8 @@ void adm_cap::mkdir(map<string, string> param_got, vector<disco::Mount> listMoun
     path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
 
     /*Flujo del void*/
+    //Se verifica que sea usuario root
+    bool isRoot = (userLoggedIn.usuario == "root" && userLoggedIn.contrasenia == "123");    
 
     cout << csnt_cap.GREEN << "RESPUESTA:" << csnt_cap.NC << " La carpeta ha sido creada correctamente " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
 }

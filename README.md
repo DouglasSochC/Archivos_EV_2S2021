@@ -38,6 +38,8 @@ Ejecutar archivo compilado
 
 ### 💿 Administracion de Discos
 
+Estos comandos permitirán crear archivos que simularán discos duros en los que se podrá formatear más adelante con el sistema de archivos ext2 o ext3. Estos comandos estarán disponibles desde que se inicia el programa.
+
 #### 1. MKDISK
 
 Este comando creará un archivo binario que simulará undisco duro, estos archivos binarios tendrán la extensión disk y su contenido al inicio será 0. Deberá ocupar físicamente el tamaño indicado por los parámetros, (no importa que el sistema operativo no muestre el tamaño exacto). Recibirá el nombre del archivo que simulará el disco duro y tendrá los siguientes parámetros
@@ -103,6 +105,8 @@ Este comando realiza un formateo completo de la partición, se formateará como 
 ### 🎎 Administracion de Usuarios y Grupos
 
 ### 📁 Administracion de Carpetas, Archivos y Permisos
+
+Estos comandos permitirán crear archivos y carpetas, así como editarlos, copiarlos, moverlos y eliminarlos. Los permisos serán para el usuario propietario del archivo, para el grupo al que pertenece y para otros usuarios, así como en Linux.
 
 #### 1. MKDIR
 

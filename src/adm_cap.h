@@ -9,8 +9,10 @@ using namespace std;
 
 class adm_cap
 {
-public:        
-    void mkdir(map<string, string> param_got, vector<disco::Mount> listMount);
+public:
+
+    void mkdir(map<string, string> param_got, disco::Mount partitionMount, disco::User UserLoggedIn);
+
 };
 
 #endif //ADM_CAP_H

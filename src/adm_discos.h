@@ -26,8 +26,8 @@ public:
     void fdisk_deleteLogic(string delete_p, disco::MBR mbr, string path, string name);
     void fdisk_addPrimaryExtended(int add_p, disco::MBR mbr, string path, string name);
     void fdisk_addLogic(int add_p, disco::MBR mbr, string path, string name);
-    void mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path);
-    void mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path);
+    void mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path, string id, disco::Mount partitionMount);
+    void mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path, string id, disco::Mount partitionMount);
     
     //AUXILIARES
     /*

@@ -84,10 +84,10 @@ public:
     } Superblock;
 
     typedef struct {
-        char operation; //R = Lectura; W = Escritura; X = Ejecucion
-        char type; //0 = Archivo, 1 = Carpeta
+        char operation; //C = Creacion; R = Lectura; U = Edicion; D = Eliminacion
+        char type; //0 = Carpeta, 1 = Archivo
         char nombre[12]; //Nombre archivo o directorio
-        string content; //Datos contenidos
+        string content = ""; //Datos contenidos
         time_t date; //Fecha de transaccion
         char propietario[10]; //Propietario de archivo o directorio
         int permiso = -1; //Permisos que posee el archivo o directorio
@@ -116,6 +116,15 @@ public:
         string id;
         time_t date_mounted;
     } Mount;
+
+    typedef struct {
+        int id; // 0 = Eliminado; >0 = Id activo
+        char tipo; // G = Grupo; U = Usuario
+        string grupo; // Nombre del grupo al que pertence
+        string usuario; // Nombre del usuario
+        string contrasenia; // Contrasenia del usuario
+        string id_mount; //Id de la montura
+    } User;
 
 };
 
