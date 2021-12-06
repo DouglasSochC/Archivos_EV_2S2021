@@ -4,6 +4,7 @@
 #include "../util/util_p.h"
 #include "../util/constant.h"
 #include "../src/adm_discos.h"
+#include "../src/adm_cap.h"
 #include "../src/reportes.h"
 #include "../src/script_adm.h"
 #include "parameters.h"
@@ -14,6 +15,7 @@ util_p util_scnr;
 constant cnst_scnr;
 parameters prmts_scnr;
 adm_discos admdcs_scnr;
+adm_cap admcap_scnr;
 reportes rp_scnr;
 script_adm scrp_scnr;
 
@@ -86,6 +88,9 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "mkfs"){
             map<string, string> param_got = prmts_scnr.param_mkfs(tokens);
             admdcs_scnr.mkfs(param_got, admdcs_scnr.getListMount());
+        }else if(comando == "mkdir"){
+            map<string, string> param_got = prmts_scnr.param_mkdir(tokens);
+            admcap_scnr.mkdir(param_got, admdcs_scnr.getListMount());
         }else if(comando == "rep"){
             map<string, string> param_got = prmts_scnr.param_rep(tokens);
             if (param_got.size() > 0){

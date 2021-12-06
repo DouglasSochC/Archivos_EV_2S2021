@@ -51,7 +51,7 @@ public:
         time_t i_mtime; //Ultima fecha en la que se modificó el inodo
         int i_block[15] = {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}; //Registros 1-12 = Bloque Directo; Registro 13 = Bloque Simple Indirecto; Registro 14 = Bloque Doble Indirecto; Registro 15 = Bloque Triple Indirecto; Si no son utilizados tendra el valor -1
         char i_type; //0 = Carpeta; 1 = Archivo
-        int i_perm = -1;    
+        int i_perm = -1;
     } Inode;
 
     typedef struct {

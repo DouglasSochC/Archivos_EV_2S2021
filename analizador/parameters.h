@@ -17,6 +17,7 @@ public:
     map<string, string> param_mount(vector<string> tokens);
     map<string, string> param_unmount(vector<string> tokens);
     map<string, string> param_mkfs(vector<string> tokens);
+    map<string, string> param_mkdir(vector<string> tokens);
     map<string, string> param_rep(vector<string> tokens);
 };
 

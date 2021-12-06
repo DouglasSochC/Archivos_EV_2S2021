@@ -27,7 +27,7 @@ El proyecto fue desarrollado en una distribucion GNU/Linux
 
 Compilar el proyecto
 ```console
-~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" "src/reportes.cpp" -o main
+~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" "src/reportes.cpp" "src/adm_cap" -o main
 ```
 
 Ejecutar archivo compilado
@@ -82,7 +82,7 @@ Por ejemplo: vda1, vda2, vdb1, vdc1… La letra será la misma para particiones 
 | -path     | Obligatorio | Este parámetro será la ruta en la que se encuentra el disco que se montará en el sistema. Este archivo ya debe existir. |
 | -name     | Obligatorio | Indica el nombre de la partición a cargar. Si no existe debe mostrar error.                                             |
 
-#### 5. UMOUNT
+#### 5. UNMOUNT
 
 Desmonta una partición del sistema. Se utilizará el id que se le asignó a la partición al momento de cargarla. Recibirá los siguientes parámetros:
 
@@ -103,6 +103,16 @@ Este comando realiza un formateo completo de la partición, se formateará como 
 ### 🎎 Administracion de Usuarios y Grupos
 
 ### 📁 Administracion de Carpetas, Archivos y Permisos
+
+#### 1. MKDIR
+
+Este comando es similar a mkfile, pero no crea archivos, sino carpetas. El propietario será el usuario que actualmente ha iniciado sesión. Tendrá los permisos 664. El usuario deberá tener el permiso de escritura en la carpeta padre, si no debe mostrar un error. Tendrá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -id       | Obligatorio | Especifica el id de la partición. Se utilizará para saber la partición y el disco que se utilizará para hacer crear la carpeta.|
+| -path       | Obligatorio | Este parámetro será la ruta de la carpeta que se creará. Si lleva espacios en blanco deberá encerrarse entre comillas.<br>Si no existen las carpetas padres, debe mostrar error, a menos que se utilice el parámetro –p, que se explica posteriormente.|
+| -p       | Obligatorio | Si se utiliza este parámetro y las carpetas padres en el parametro **path** no existen, entonces deben crearse. <br>Si ya existen, no realizara nada. No recibirá ningún valor, si lo recibe debe mostrar error.|
 
 ### 📜 Script
 

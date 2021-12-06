@@ -67,11 +67,9 @@ map<string, string> parameters::param_mkdisk(vector<string> tokens){
 map<string, string> parameters::param_rmdisk(vector<string> tokens){
     
     map<string, string> map_u;
-    for (int i = 1; i < tokens.size(); i++)
-    {
+    for (int i = 1; i < tokens.size(); i++){
         vector<string> return_params = util_prmts.separateString(tokens[i]);
-        if (return_params.size() == 2)
-        {
+        if (return_params.size() == 2){
             string llave = util_prmts.toLowerString(return_params[0]);
             string valor = return_params[1];
             if (!(llave == "-comentario" || llave == "-path")){
@@ -206,20 +204,21 @@ map<string, string> parameters::param_mount(vector<string> tokens){
             cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
         }
     }
+    string comentario = map_u["-comentario"];
     string path = map_u["-path"];
     string name = map_u["-name"];
 
     if (!name.empty() && !path.empty())
     {
         if(!util_prmts.check_correctExtFile(path)){
-            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " La extension del archivo es incorrecto " << endl;
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " La extension del archivo es incorrecto " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
         }else if(!util_prmts.check_existFile(path)){
-            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El disco no existe en la ruta: " << path << endl;
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El disco no existe en la ruta: " << path << " " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
         }
     }else{
-        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-name, -path)" << endl;
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-name, -path) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
         map_u.clear();
     }
     return map_u;
@@ -249,10 +248,11 @@ map<string, string> parameters::param_unmount(vector<string> tokens){
             cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
         }
     }
-    
+
+    string comentario = map_u["-comentario"];
     string id = map_u["-id"];
     if (id.empty()){
-        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-id)" << endl;
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-id) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
         map_u.clear();
     }
     return map_u;
@@ -299,6 +299,59 @@ map<string, string> parameters::param_mkfs(vector<string> tokens){
     return map_u;
 }
 /*FIN DISCOS*/
+
+/*INI CAP*/
+map<string, string> parameters::param_mkdir(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        
+        //Se verifica que el parametro -p no tenga una asignacion
+        if(return_params.size() == 0 && util_prmts.toLowerString(tokens[i]) == "-p"){
+            return_params.push_back("-p");
+            return_params.push_back("");
+        }
+
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-id" || llave == "-path" || llave == "-p")){
+                cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
+        }
+    }
+
+    string comentario = map_u["-comentario"];
+    string path = map_u["-path"];
+    string var_p;
+    if (map_u.find("-p") == map_u.end()) {
+        //NO EXISTE LA LLAVE
+    } else {
+        var_p = map_u["-p"];        
+    }
+    string id = map_u["-id"];
+    if (!id.empty() && !path.empty()){
+        if(!var_p.empty()){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " Al parametro -P no se le debe asignar un valor " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-id, -path) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
+
+/*FIN CAP*/
 
 /*INI REPORTES*/
 map<string, string> parameters::param_rep(vector<string> tokens){
