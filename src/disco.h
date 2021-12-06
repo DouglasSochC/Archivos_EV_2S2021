@@ -64,7 +64,7 @@ public:
     } Folderblock;
 
     typedef struct {
-        int s_filesystem_type = 0; //Guarda el numero que identifica el sistema de archivos utilizado; 1 = Ninguna; 2 = EXT2; 3 = EXT3
+        int s_filesystem_type = 0; //Guarda el numero que identifica el sistema de archivos utilizado; 0 = Ninguna; 2 = EXT2; 3 = EXT3
         int s_inodes_count; //Guarda el número total de inodos
         int s_blocks_count; //Guarda el número total de bloques
         int s_free_blocks_count; //Contiene el número de bloques libres
@@ -118,12 +118,12 @@ public:
     } Mount;
 
     typedef struct {
-        int id; // 0 = Eliminado; >0 = Id activo
+        int id = -1; // -1 = Sin uso; 0 = Eliminado; >0 = Id activo
         char tipo; // G = Grupo; U = Usuario
-        string grupo; // Nombre del grupo al que pertence
-        string usuario; // Nombre del usuario
-        string contrasenia; // Contrasenia del usuario
-        string id_mount; //Id de la montura
+        string grupo = ""; // Nombre del grupo al que pertence
+        string usuario = ""; // Nombre del usuario
+        string contrasenia = ""; // Contrasenia del usuario
+        string id_mount = ""; //Id de la montura
     } User;
 
 };

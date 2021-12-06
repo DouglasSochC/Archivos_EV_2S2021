@@ -27,7 +27,7 @@ El proyecto fue desarrollado en una distribucion GNU/Linux
 
 Compilar el proyecto
 ```console
-~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" "src/reportes.cpp" "src/adm_cap" -o main
+~$ g++ main.cpp "analizador/scanner.cpp" "analizador/parameters.cpp" "util/util_p.cpp" "src/adm_discos.cpp" "src/script_adm.cpp" "src/reportes.cpp" "src/adm_cap" "src/adm_ug" -o main
 ```
 
 Ejecutar archivo compilado
@@ -103,6 +103,22 @@ Este comando realiza un formateo completo de la partición, se formateará como 
 | -fs       | Opcional | Indica el sistema de archivos a formatear ext2 / ext3. Por defecto será ext2. Y los valores serán. 2fs para ext2 o 3fs para ext3|
 
 ### 🎎 Administracion de Usuarios y Grupos
+
+Estos comandos permitirán crear usuarios y grupos, asi como eliminarlos. Los permisos solo los tendrá el usuario root.
+
+#### 1. LOGIN
+
+Este comando se utiliza para iniciar sesión en el sistema. No se puede iniciar otra sesión sin haber hecho un logout antes, si no, debe mostrar un mensaje de error indicando que debe cerrar sesión antes. Recibirá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -usr       | Obligatorio | Especifica el nombre del usuario que iniciará sesión. Si no se encuentra mostrará un mensaje indicando que el usuario no existe. En este caso si distinguirá mayúsculas de minúsculas.|
+| -pwd       | Obligatorio | Indicará la contraseña del usuario, si no coincide debe mostrar un mensaje de autenticación fallida. Distinguirá entre mayúsculas y minúsculas.|
+| -id       | Obligatorio | Indicará el id de la partición montada de la cual van a iniciar sesión. De lograr iniciar sesión todas las acciones se realizarán sobre este id.|
+
+#### 2. LOGOUT
+
+Este comando se utiliza para cerrar sesión. Debe haber una sesión activa anteriormente para poder utilizarlo, si no, debe mostrar un mensaje de error. Este comando no recibe parámetros.
 
 ### 📁 Administracion de Carpetas, Archivos y Permisos
 

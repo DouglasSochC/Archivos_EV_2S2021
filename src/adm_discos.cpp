@@ -312,6 +312,11 @@ void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMo
         n_inodes = floor((size_partition - csnt_admdcs.SIZE_SPB) / (4 + csnt_admdcs.SIZE_J + csnt_admdcs.SIZE_I + 3 * csnt_admdcs.SIZE_AB));
     }
 
+    int tamanio_necesario_inicial = csnt_admdcs.SIZE_PB + 2 * csnt_admdcs.SIZE_I + 2 * csnt_admdcs.SIZE_FB;
+    if (size_partition < tamanio_necesario_inicial){
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No hay suficiente espacio para formatear " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }    
+
     disco::Superblock temp_spb;
     temp_spb.s_inodes_count = n_inodes;
     //Se le resta un inodo con el fin de que no se sobrepase el espacio de la particion
@@ -788,7 +793,7 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partitio
     fwrite(&temp_folderblock, csnt_admdcs.SIZE_FB, 1, save_structs);
 
     //Defino los datos predeterminados que posee el archivo user.txt
-    string data = "1,G,root\n1,U,root,root,123\n";
+    string data = csnt_admdcs.USER_TXT;
     //Se crea el segundo inodo el cual sera para el archivo user.txt
     disco::Inode inode_archive;
     inode_archive.i_uid = 1;
@@ -933,7 +938,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partitio
     fwrite(&journaling1, csnt_admdcs.SIZE_J, 1, save_structs);
 
     //Defino los datos predeterminados que posee el archivo user.txt
-    string data = "1,G,root\n1,U,root,root,123\n";
+    string data = csnt_admdcs.USER_TXT;
     //Se crea el segundo inodo el cual sera para el archivo user.txt
     disco::Inode inode_archive;
     inode_archive.i_uid = 1;

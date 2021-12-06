@@ -35,3 +35,5 @@ void adm_cap::mkdir(map<string, string> param_got, disco::Mount partitionMount, 
 
     cout << csnt_cap.GREEN << "RESPUESTA:" << csnt_cap.NC << " La carpeta ha sido creada correctamente " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
 }
+
+//CREAR FUNCION CAT

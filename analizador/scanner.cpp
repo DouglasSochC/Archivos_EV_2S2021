@@ -5,6 +5,7 @@
 #include "../util/constant.h"
 #include "../src/adm_discos.h"
 #include "../src/adm_cap.h"
+#include "../src/adm_ug.h"
 #include "../src/reportes.h"
 #include "../src/script_adm.h"
 #include "parameters.h"
@@ -16,8 +17,10 @@ constant cnst_scnr;
 parameters prmts_scnr;
 adm_discos admdcs_scnr;
 adm_cap admcap_scnr;
+adm_ug admug_scnr;
 reportes rp_scnr;
 script_adm scrp_scnr;
+disco::User scrp_UsuarioLog;
 
 void scanner::init(){
     
@@ -88,9 +91,14 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "mkfs"){
             map<string, string> param_got = prmts_scnr.param_mkfs(tokens);
             admdcs_scnr.mkfs(param_got, admdcs_scnr.getListMount());
+        }else if(comando == "login"){
+            map<string, string> param_got = prmts_scnr.param_login(tokens);
+            scrp_UsuarioLog = admug_scnr.login(param_got, admdcs_scnr.getListMount(), scrp_UsuarioLog);
+        }else if(comando == "logout"){
+            scrp_UsuarioLog = admug_scnr.logout(scrp_UsuarioLog);
         }else if(comando == "mkdir"){
             //map<string, string> param_got = prmts_scnr.param_mkdir(tokens);
-            //admcap_scnr.mkdir(param_got, admdcs_scnr.getListMount());
+            //admcap_scnr.mkdir(param_got, admdcs_scnr.getListMount(), scrp_UsuarioLog);
         }else if(comando == "rep"){
             map<string, string> param_got = prmts_scnr.param_rep(tokens);
             if (param_got.size() > 0){

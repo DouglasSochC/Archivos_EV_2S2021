@@ -28,14 +28,20 @@ public:
     
     const int SIZE_AB = sizeof(disco::Archiveblock); //Archive Block
     const int SIZE_FB = sizeof(disco::Folderblock); //File Block
+    const int SIZE_PB = sizeof(disco::Pointerblock); //File Block
     
     //COLORES
+
     const string NC = "\e[0m";
     const string RED = "\e[0;31m";
     const string GREEN = "\e[0;32m";
     const string YELLOW = "\e[0;33m";
     const string BLUE = "\e[0;34m";
     const string CYAN = "\e[0;36m";
+
+    //USUARIOS Y GRUPOS INICIALES
+
+    const string USER_TXT = "1,G,root\n1,U,root,root,123\n";
 };
 
 #endif

@@ -93,6 +93,7 @@ public:
 
     disco::Mount checkPartitionMounted(string path);
 
+    /*Gets mount in memory by id*/
     disco::Mount getMountedLog(string id);
 
     vector<disco::Mount> getListMount();

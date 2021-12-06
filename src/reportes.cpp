@@ -365,7 +365,7 @@ void reportes::sb(map<string, string> param_got, vector<disco::Mount> list_mount
     //Se obtiene la particion que esta montada
     disco::Mount tempMount = admdcs_rp.getMountedLog(id); 
     if (tempMount.status == '0'){
-        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No existe el id que desea desmontar " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No existe el id que desea " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
         return;
     }
     
