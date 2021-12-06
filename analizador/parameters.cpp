@@ -350,6 +350,51 @@ map<string, string> parameters::param_mkdir(vector<string> tokens){
     }
     return map_u;
 }
+
+map<string, string> parameters::param_cat(vector<string> tokens){
+    
+    map<string, string> map_u;
+    int id_file = -1;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        if (return_params.size() == 2){
+            id_file = (id_file == -1)? 1: id_file;
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            string llave_contador = "-file" + to_string(id_file);
+            if (!(llave == "-comentario" || llave == llave_contador)){
+                cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                    if (llave != "-comentario"){
+                        id_file += 1;
+                    }
+                }
+            }
+        }else{
+            cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
+        }
+    }
+
+    string comentario = map_u["-comentario"];
+    bool allExist = true;
+    for (int i = 1; i < id_file; i++){
+        string filen = "-file" + to_string(i);
+        if (map_u.find(filen) == map_u.end()) {
+            allExist = false;
+            break;
+        }
+    }
+    
+    if (!allExist || id_file == 1){
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-filen) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
 /*FIN CAP*/
 
 /*INI UG*/

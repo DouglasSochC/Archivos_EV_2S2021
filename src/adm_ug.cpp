@@ -30,7 +30,7 @@ disco::User adm_ug::login(map<string, string> param_got, vector<disco::Mount> li
     /*Flujo del void*/
     //Se verifica que no halla una sesion activa
     if (UserLoggedIn.id != -1){
-        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya hay una sesion activa" << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya hay una sesion activa " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
         return UserLoggedIn;
     }
 
@@ -45,47 +45,12 @@ disco::User adm_ug::login(map<string, string> param_got, vector<disco::Mount> li
         cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el id " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
         return disco::User();
     }
-
-    //Se crean variables que se utilizaran posteriormente
-    string path = actualMount.path;
-    string name = actualMount.name;
-    int part_start_partition = -1;
-
-    //Se obtiene el MBR de la particion montada
-    disco::MBR mbr = admdcs_admug.getMBR(path);
-    if (mbr.mbr_tamano == -1){
-        cout << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
-        return UserLoggedIn;
-    }
     
-    //Se verifica que tipo de particion es, para obtener sus caracteristicas
-    char foundName = admdcs_admug.find_namePartition(name, path);
-    if (foundName == 'P' || foundName == 'E'){
-        int before = -1; int after = -1;
-        disco::Partition tempPartition = admdcs_admug.getPartitionEP(mbr, name, &before, &before);
-        part_start_partition = tempPartition.part_start;
-    }else if(foundName == 'L'){
-        disco::Partition partitionExtended;
-        vector<disco::Partition> listPartitions = admdcs_admug.getListPartitionsEP(mbr);
-        for (int i = 0; i < listPartitions.size(); i++){
-            if (listPartitions[i].part_type == 'E'){
-                partitionExtended = listPartitions[i];
-                break;
-            }            
-        }
-        int before = -1;
-        disco::EBR tempPartition = admdcs_admug.getPartitionL(partitionExtended, path, name, &before);
-        part_start_partition = tempPartition.part_start + csnt_ug.SIZE_EBR;
-    }else{
-        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No se ha encontrado el nombre de la particion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
-        return UserLoggedIn;
-    }
-    
-    string text = getArchiveUserTXT(part_start_partition, path);
+    string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
     disco::User response = checkUser(text, usr, pwd);
 
     if (response.id != -1){
-        cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " ¡Bienvenido! " << usr << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " ¡Bienvenido! " << usr << " "<< csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
     }else{
         cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe un usuario con el username y contraseña ingresada " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
     }

@@ -26,8 +26,8 @@ public:
     void fdisk_deleteLogic(string delete_p, disco::MBR mbr, string path, string name);
     void fdisk_addPrimaryExtended(int add_p, disco::MBR mbr, string path, string name);
     void fdisk_addLogic(int add_p, disco::MBR mbr, string path, string name);
-    void mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path, string id, disco::Mount partitionMount);
-    void mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path, string id, disco::Mount partitionMount);
+    void mkfs_EXT2(disco::Superblock superblock, disco::Mount partitionMount);
+    void mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionMount);
     
     //AUXILIARES
     /*
@@ -87,9 +87,10 @@ public:
     disco::Partition getPartitionEP(disco::MBR mbr, string name, int *before, int *after);
 
     /*
-    Gets one struct of Mount that will mount in memory
+    Gets one struct of Mount that will mount in memory if the partition already is in memory 
+    return a struct Mount where .status is '0'
     */
-    disco::Mount partitionToMounted(string name, string path);
+    disco::Mount partitionToMounted(string name, string path, char typeP, int part_start, int size_partition);
 
     disco::Mount checkPartitionMounted(string path);
 

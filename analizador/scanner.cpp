@@ -96,6 +96,9 @@ void scanner::exec_command(vector<string> tokens){
             scrp_UsuarioLog = admug_scnr.login(param_got, admdcs_scnr.getListMount(), scrp_UsuarioLog);
         }else if(comando == "logout"){
             scrp_UsuarioLog = admug_scnr.logout(scrp_UsuarioLog);
+        }else if(comando == "cat"){
+            map<string, string> param_got = prmts_scnr.param_cat(tokens);
+            //scrp_UsuarioLog = admcap_scnr.mkdir(scrp_UsuarioLog);
         }else if(comando == "mkdir"){
             //map<string, string> param_got = prmts_scnr.param_mkdir(tokens);
             //admcap_scnr.mkdir(param_got, admdcs_scnr.getListMount(), scrp_UsuarioLog);

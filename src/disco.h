@@ -109,11 +109,14 @@ public:
 
     typedef struct {
         char status = '0'; //0 = Inactivo; 1 = Activo
-        int num_partition;
-        short letter;
-        string name;
-        string path;
-        string id;
+        int num_partition; //Numero con el que se identifica la particion
+        short letter; //Letra con la que se identifica la particion
+        string name; //Nombre de la particion
+        string path; //Path del disco de la particion
+        string id; //Id asignado por el sistema
+        char typeP; //Tipo de particion que se monto
+        int part_start; //Posicion de inicio de la particion
+        int size_partition; //Tamanio de la particion
         time_t date_mounted;
     } Mount;
 

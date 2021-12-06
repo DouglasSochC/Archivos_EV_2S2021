@@ -15,13 +15,8 @@ util_p util_admdcs;
 constant csnt_admdcs;
 adm_cap admcap_admdcs;
 vector <disco::Mount> Memory_Mount;
-const string PATH_TEMP  = "/tmp/douglas/Disco1.disk"; //Eliminar antes de ultimo push
 
 //PENDIENTES:
-
-//PREGUNTAR:
-//1. A un inodo de tipo archivo se le debe de dejar un tamaño definido desde el principio?
-//O debe de seguir aumentando?
 
 //RECORDAR:
 //1. Siempre hay que validar si el path o el name inicia con " para que funcione correctamente
@@ -201,26 +196,50 @@ void adm_discos::mount(map<string, string> param_got){
     name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
 
     /*Flujo de void*/
-    disco::MBR mbr;
-    FILE *file = fopen(path.c_str(), "rb");
-    int read = fread(&mbr, csnt_admdcs.SIZE_MBR, 1, file);
-    if (read > 0){
-        fclose(file);
-    }
 
+    //Se declara variables que seran importantes al crear la montura
+    int part_start_partition = -1;
+    int size_partition = -1;
+    
+    //Se obtiene el MBR del path    
+    disco::MBR mbr = getMBR(path);
+    if (mbr.mbr_tamano == -1){
+        cout << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
+    }
+    
+    //Se verifica que tipo de particion es, para obtener sus caracteristicas
     char foundName = find_namePartition(name, path);
-    if (foundName == 'P' || foundName == 'L'){
-        disco::Mount newMount = partitionToMounted(name, path);
-        if (newMount.status != '0'){
-            Memory_Mount.push_back(newMount);
-            cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La particion ha sido montada correctamente y se le ha asignado el siguiente id:\e[1m" << newMount.id << "\e[0m" << " "  << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
-        }else{
-            cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " Ya esta montada la particion " << name << " " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
-        }        
+    if (foundName == 'P'){
+        int before = -1; int after = -1;
+        disco::Partition tempPartition = getPartitionEP(mbr, name, &before, &before);
+        part_start_partition = tempPartition.part_start;
+        size_partition = tempPartition.part_size;
+    }else if(foundName == 'L'){
+        disco::Partition partitionExtended;
+        vector<disco::Partition> listPartitions = getListPartitionsEP(mbr);
+        for (int i = 0; i < listPartitions.size(); i++){
+            if (listPartitions[i].part_type == 'E'){
+                partitionExtended = listPartitions[i];
+                break;
+            }            
+        }
+        int before = -1;
+        disco::EBR tempPartition = getPartitionL(partitionExtended, path, name, &before);
+        part_start_partition = tempPartition.part_start + csnt_admdcs.SIZE_EBR;
+        size_partition = tempPartition.part_size - csnt_admdcs.SIZE_EBR;
     }else if(foundName == 'E'){
         cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se puede montar una particion extendida " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
     }else{
-        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe la particion que desea montar" << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe la particion que desea montar " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }
+    
+    disco::Mount newMount = partitionToMounted(name, path, foundName, part_start_partition, size_partition);
+    if (newMount.status != '0'){
+        Memory_Mount.push_back(newMount);
+        cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La particion ha sido montada correctamente y se le ha asignado el siguiente id:\e[1m" << newMount.id << "\e[0m" << " "  << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+    }else{
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " Ya esta montada la particion " << name << " " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
     }
 }
 
@@ -262,48 +281,13 @@ void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMo
     //Se obtiene la particion que esta montada
     disco::Mount tempMount = getMountedLog(id); 
     if (tempMount.status == '0'){
-        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe el id que desea desmontar " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe el id que desea " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
         return;
     }
     
     //Se crean variables que se utilizaran posteriormente
-    string path = tempMount.path;
-    string name = tempMount.name;
     time_t date_mounted = tempMount.date_mounted;
-    int part_start_partition = -1;
-    int size_partition = -1;
-
-    //Se obtiene el MBR de la particion montada
-    disco::MBR mbr = getMBR(path);
-    if (mbr.mbr_tamano == -1){
-        cout << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
-        return;
-    }
-    
-    //Se verifica que tipo de particion es, para obtener sus caracteristicas
-    char foundName = find_namePartition(name, path);
-    if (foundName == 'P' || foundName == 'E'){
-        int before = -1; int after = -1;
-        disco::Partition tempPartition = getPartitionEP(mbr, name, &before, &before);
-        part_start_partition = tempPartition.part_start;
-        size_partition = tempPartition.part_size;
-    }else if(foundName == 'L'){
-        disco::Partition partitionExtended;
-        vector<disco::Partition> listPartitions = getListPartitionsEP(mbr);
-        for (int i = 0; i < listPartitions.size(); i++){
-            if (listPartitions[i].part_type == 'E'){
-                partitionExtended = listPartitions[i];
-                break;
-            }            
-        }
-        int before = -1;
-        disco::EBR tempPartition = getPartitionL(partitionExtended, path, name, &before);
-        part_start_partition = tempPartition.part_start + csnt_admdcs.SIZE_EBR;
-        size_partition = tempPartition.part_size - csnt_admdcs.SIZE_EBR;
-    }else{
-        cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se ha encontrado el nombre de la particion " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
-        return;
-    }
+    int size_partition = tempMount.size_partition;
     
     int n_inodes;    
     if (fs == "2fs"){
@@ -328,10 +312,10 @@ void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMo
     temp_spb.s_mnt_count = 1;
     if (fs == "2fs") {
         temp_spb.s_filesystem_type = 2;
-        mkfs_EXT2(temp_spb, part_start_partition, path, id, tempMount);
+        mkfs_EXT2(temp_spb, tempMount);
     } else {
         temp_spb.s_filesystem_type = 3;
-        mkfs_EXT3(temp_spb, part_start_partition, path, id, tempMount);
+        mkfs_EXT3(temp_spb, tempMount);
     }
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Formateo completo de la particion realizado correctamente " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
 }
@@ -702,10 +686,10 @@ void adm_discos::fdisk_addLogic(int add_p, disco::MBR mbr, string path, string n
     cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " Se ha " << concepto << " correctamente la particion logica ";
 }
 
-void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partition, string path, string id_mount, disco::Mount partitionMount){
+void adm_discos::mkfs_EXT2(disco::Superblock superblock, disco::Mount partitionMount){
 
     //Inicio del bitmap de inodos
-    superblock.s_bm_inode_start = part_start_partition + csnt_admdcs.SIZE_SPB;
+    superblock.s_bm_inode_start = partitionMount.part_start + csnt_admdcs.SIZE_SPB;
     //Inicio del bitmap de bloques
     superblock.s_bm_block_start = superblock.s_bm_inode_start + superblock.s_inodes_count;
     //Inicio de la tabla de inodos
@@ -713,10 +697,10 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partitio
     //Inicio de la tabla de bloques
     superblock.s_block_start = superblock.s_inode_start + (superblock.s_inodes_count * csnt_admdcs.SIZE_I);
 
-    FILE *format_partition = fopen(path.c_str(), "rb+");
+    FILE *format_partition = fopen(partitionMount.path.c_str(), "rb+");
     
     //Se almacena el superbloque
-    fseek(format_partition, part_start_partition, SEEK_SET);
+    fseek(format_partition, partitionMount.part_start, SEEK_SET);
     fwrite(&superblock, csnt_admdcs.SIZE_SPB, 1, format_partition);
     
     char zero = '0';
@@ -753,7 +737,7 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partitio
     inferior se agrega la carpeta root y se agrega un archivo llamado user.txt*/
     
     //Defino una variable que almacene las estructuras en el disco
-    FILE *save_structs = fopen(path.c_str(), "rb+");
+    FILE *save_structs = fopen(partitionMount.path.c_str(), "rb+");
     
     //Ahora se crea el primer inodo el cual sera la carpeta root
     disco::Inode inode_root;
@@ -825,10 +809,10 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, int part_start_partitio
     fclose(save_structs);
 }
 
-void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partition, string path, string id_mount, disco::Mount partitionMount){
+void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionMount){
     
     //Inicio del Journaling
-    int journaling_start = part_start_partition + csnt_admdcs.SIZE_SPB;
+    int journaling_start = partitionMount.part_start + csnt_admdcs.SIZE_SPB;
     //Cantidad de Journaling
     int total_block_journaling = superblock.s_inodes_count;
 
@@ -841,9 +825,9 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partitio
     //Inicio de la tabla de bloques
     superblock.s_block_start = superblock.s_inode_start + (superblock.s_inodes_count * csnt_admdcs.SIZE_I);
 
-    FILE *format_partition = fopen(path.c_str(), "rb+");
+    FILE *format_partition = fopen(partitionMount.path.c_str(), "rb+");
     //Se almacena la estructura de superbloque
-    fseek(format_partition, part_start_partition, SEEK_SET);
+    fseek(format_partition, partitionMount.part_start, SEEK_SET);
     fwrite(&superblock, sizeof(disco::Superblock), 1, format_partition);
 
     //Seteo de estructuras journaling
@@ -886,7 +870,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, int part_start_partitio
     inferior se agrega la carpeta root y se agrega un archivo llamado user.txt*/
     
     //Defino una variable que almacene las estructuras en el disco
-    FILE *save_structs = fopen(path.c_str(), "rb+");
+    FILE *save_structs = fopen(partitionMount.path.c_str(), "rb+");
     
     //Ahora se crea el primer inodo el cual sera la carpeta root
     disco::Inode inode_root;
@@ -1197,7 +1181,7 @@ disco::Partition adm_discos::getPartitionEP(disco::MBR mbr, string name, int *be
     return response;
 }
 
-disco::Mount adm_discos::partitionToMounted(string name, string path){
+disco::Mount adm_discos::partitionToMounted(string name, string path, char typeP, int part_start, int size_partition){
     
     disco::Mount response;
     int partition_next = 1;
@@ -1234,6 +1218,9 @@ disco::Mount adm_discos::partitionToMounted(string name, string path){
         response.id = letter+to_string(response.num_partition);
         response.id = "vd"+response.id;
         response.date_mounted = time(nullptr);
+        response.typeP = typeP;
+        response.part_start = part_start;
+        response.size_partition = size_partition;
     }
     return response;
 }
