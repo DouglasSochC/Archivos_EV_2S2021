@@ -3,7 +3,6 @@
 #include <cmath>
 #include "../util/util_p.h"
 #include "../util/constant.h"
-#include "adm_discos.h"
 #include "reportes.h"
 #include "disco.h"
 
@@ -11,7 +10,6 @@ using namespace std;
 
 constant csnt_rp;
 util_p util_rp;
-adm_discos admdcs_rp;
 
 void reportes::mbr(map<string, string> param_got, vector<disco::Mount> list_mount){
     if (param_got.size() == 0){
@@ -361,9 +359,8 @@ void reportes::sb(map<string, string> param_got, vector<disco::Mount> list_mount
     util_rp.createDirectory(path);
 
     /*Flujo del void*/
-
     //Se obtiene la particion que esta montada
-    disco::Mount tempMount = admdcs_rp.getMountedLog(id); 
+    disco::Mount tempMount = getMount(id, list_mount);
     if (tempMount.status == '0'){
         cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No existe el id que desea " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
         return;
@@ -373,37 +370,7 @@ void reportes::sb(map<string, string> param_got, vector<disco::Mount> list_mount
     string path_aux = tempMount.path;
     string name_aux = tempMount.name;
     time_t date_mounted = tempMount.date_mounted;
-    int part_start_partition = -1;
-
-    //Se obtiene el MBR de la particion montada
-    disco::MBR mbr = admdcs_rp.getMBR(path_aux);
-    if (mbr.mbr_tamano == -1){
-        cout << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
-        return;
-    }
-    
-    //Se verifica que tipo de particion es, para obtener sus caracteristicas
-    char foundName = admdcs_rp.find_namePartition(name_aux, path_aux);
-    if (foundName == 'P' || foundName == 'E'){
-        int before = -1; int after = -1;
-        disco::Partition tempPartition = admdcs_rp.getPartitionEP(mbr, name_aux, &before, &before);
-        part_start_partition = tempPartition.part_start;
-    }else if(foundName == 'L'){
-        disco::Partition partitionExtended;
-        vector<disco::Partition> listPartitions = admdcs_rp.getListPartitionsEP(mbr);
-        for (int i = 0; i < listPartitions.size(); i++){
-            if (listPartitions[i].part_type == 'E'){
-                partitionExtended = listPartitions[i];
-                break;
-            }            
-        }
-        int before = -1;
-        disco::EBR tempPartition = admdcs_rp.getPartitionL(partitionExtended, path_aux, name_aux, &before);
-        part_start_partition = tempPartition.part_start + csnt_rp.SIZE_EBR;
-    }else{
-        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha encontrado el nombre de la particion " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
-        return;
-    }
+    int part_start_partition = tempMount.part_start;
     
     //Obtengo la estructura del superbloque
     disco::Superblock spb;

@@ -126,8 +126,13 @@ public:
         string grupo = ""; // Nombre del grupo al que pertence
         string usuario = ""; // Nombre del usuario
         string contrasenia = ""; // Contrasenia del usuario
-        string id_mount = ""; //Id de la montura
+        Mount montura; //Montura
     } User;
+
+    typedef struct {
+        int id = -1; // -1 = Sin uso; 0 = Eliminado; >0 = Id activo
+        string nombre = ""; // Nombre del grupo
+    } Group;
 
 };
 

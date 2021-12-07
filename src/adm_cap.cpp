@@ -12,6 +12,9 @@ using namespace std;
 util_p util_cap;
 constant csnt_cap;
 
+//NOTA: UNA VEZ LOGUEADO EL USUARIO LA ADMINISTRACION DE DISCO SE QUEDA BLOQUEADO
+//VERIFICAR: COMO SE GENERAN LOS REPORTES AHORA QUE CAMBIE EL COMANDO MOUNT
+
 void adm_cap::mkdir(map<string, string> param_got, disco::Mount partitionMount, disco::User userLoggedIn){
     if (param_got.size() == 0){return;}
 

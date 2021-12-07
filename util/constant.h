@@ -28,7 +28,7 @@ public:
     
     const int SIZE_AB = sizeof(disco::Archiveblock); //Archive Block
     const int SIZE_FB = sizeof(disco::Folderblock); //File Block
-    const int SIZE_PB = sizeof(disco::Pointerblock); //File Block
+    const int SIZE_PB = sizeof(disco::Pointerblock); //Pointer Block
     
     //COLORES
 
