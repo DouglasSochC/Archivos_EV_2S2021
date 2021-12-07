@@ -305,8 +305,8 @@ void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMo
     temp_spb.s_inodes_count = n_inodes;
     //Se le resta un inodo con el fin de que no se sobrepase el espacio de la particion
     temp_spb.s_blocks_count = 3 * n_inodes;
-    temp_spb.s_free_blocks_count = temp_spb.s_blocks_count;
-    temp_spb.s_free_inodes_count = temp_spb.s_inodes_count;
+    temp_spb.s_free_blocks_count = temp_spb.s_blocks_count - 2;
+    temp_spb.s_free_inodes_count = temp_spb.s_inodes_count - 2;
     temp_spb.s_mtime = date_mounted;
     temp_spb.s_umtime = 0;
     temp_spb.s_mnt_count = 1;
@@ -911,9 +911,11 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
 
     //Se crea el journaling de la primera transaccion
     disco::Journaling journaling1;
+    journaling1.id_journal = 1;
     journaling1.operation = 'C';
     journaling1.type = '0';
     strcpy(journaling1.nombre, "/");
+    strcpy(journaling1.content, "");
     journaling1.date = time(nullptr);
     strcpy(journaling1.propietario, "root");
     journaling1.permiso = 664;
@@ -954,16 +956,18 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
 
     //Se crea el journaling de la segunda transaccion
     disco::Journaling journaling2;
+    journaling2.id_journal = 2;
     journaling2.operation = 'C';
     journaling2.type = '1';
     strcpy(journaling2.nombre, "user.txt");
-    journaling2.content = data;
+    strcpy(journaling2.content, data.c_str());
     journaling2.date = time(nullptr);
     strcpy(journaling2.propietario, "root");
     journaling2.permiso = 664;
     //Se almacena el journaling
     fseek(save_structs, journaling_start + csnt_admdcs.SIZE_J, SEEK_SET);
     fwrite(&journaling2, csnt_admdcs.SIZE_J, 1, save_structs);
+
     fclose(save_structs);
 }
 

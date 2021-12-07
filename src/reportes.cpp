@@ -478,6 +478,248 @@ void reportes::sb(map<string, string> param_got, vector<disco::Mount> list_mount
     cout << csnt_rp.GREEN << "RESPUESTA:" << csnt_rp.NC << " El reporte SB ha sido generado correctamente " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
 }
 
+void reportes::journaling(map<string, string> param_got, vector<disco::Mount> list_mount){
+
+    if (param_got.size() == 0){
+        return;
+    }
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string name = param_got["-name"].c_str(); //Este es el nombre del reporte
+    string path = param_got["-path"].c_str();
+    string id = param_got["-id"].c_str();
+    string ruta = param_got["-ruta"].c_str();
+
+    /*Formateo de datos*/
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+    util_rp.createDirectory(path);
+
+    /*Flujo del void*/
+    disco::Mount tempMount = getMount(id, list_mount);
+    if (tempMount.status == '0'){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha encontrado el id solicitado " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+
+    //Se crean variables que se utilizaran posteriormente
+    string path_aux = tempMount.path;
+    string name_aux = tempMount.name;
+    time_t date_mounted = tempMount.date_mounted;
+    int part_start_partition = tempMount.part_start;
+    
+    //Obtengo la estructura del superbloque
+    disco::Superblock spb;
+    FILE *file_journaling = fopen(path_aux.c_str(), "rb");
+    fseek(file_journaling, part_start_partition, SEEK_SET);
+    int read = fread(&spb, csnt_rp.SIZE_SPB, 1, file_journaling);
+    if (read <= 0){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha podido leer el disco " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+    if (spb.s_filesystem_type == 0)    {
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha formateado esta particion " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }else if(spb.s_filesystem_type == 2){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " Es un sistema EXT2 por lo tanto no se tiene un jornaling " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+    
+    vector<disco::Journaling> listJournal;
+    disco::Journaling tempJournal;
+    //Ayuda a que entre a la lectura del disco
+    tempJournal.permiso = 664;
+    int acum = 0;
+    while (tempJournal.permiso != -1){
+        fseek(file_journaling, part_start_partition + csnt_rp.SIZE_SPB + acum * (csnt_rp.SIZE_J), SEEK_SET);
+        fread(&tempJournal, csnt_rp.SIZE_J, 1, file_journaling);
+        if (tempJournal.permiso != -1){
+            listJournal.push_back(tempJournal);
+            tempJournal = disco::Journaling();
+            tempJournal.permiso = 664;
+        }
+        acum++;
+    }
+    tempJournal = disco::Journaling();
+    fclose(file_journaling);
+
+    struct tm *tm;
+    char fecha_transaccion[20];
+    string draw;
+    draw = "digraph G{\n"
+            "forcelabels= true;\n"
+            "node [shape = plaintext];\n"
+            "general [label = <\n"
+            "<table>\n"
+            "<tr><td COLSPAN = '8' BGCOLOR=\"#BFBFBF\"><font color=\"black\">JOURNALING - " + name_aux + " en " + path_aux + "</font></td></tr>\n"
+            "<tr><td BGCOLOR=\"#E0FFFF\">Id</td><td BGCOLOR=\"#E0FFFF\">Operacion</td><td BGCOLOR=\"#E0FFFF\" >Tipo</td><td BGCOLOR=\"#E0FFFF\">Nombre</td><td BGCOLOR=\"#E0FFFF\">Contenido</td><td BGCOLOR=\"#E0FFFF\">Fecha Transaccion</td><td BGCOLOR=\"#E0FFFF\">Propietario</td><td BGCOLOR=\"#E0FFFF\">Permisos</td></tr>\n";
+    for (int i = 0; i < listJournal.size(); i++){
+        tm = localtime(&listJournal[i].date);
+        strftime(fecha_transaccion, 20, "%Y/%m/%d %H:%M:%S", tm);
+        string type_block = (listJournal[i].type == '0')? "Carpeta": "Archivo";
+        string operation_block(1,listJournal[i].operation);
+        draw += "<tr>"
+                "<td>" + to_string(listJournal[i].id_journal) + "</td>\n"
+                "<td>" + operation_block + "</td>\n"
+                "<td>" + type_block + "</td>\n"
+                "<td>" + listJournal[i].nombre + "</td>\n"
+                "<td>" + listJournal[i].content + "</td>\n"
+                "<td>" + fecha_transaccion + "</td>\n"
+                "<td>" + listJournal[i].propietario + "</td>\n"
+                "<td>" + to_string(listJournal[i].permiso) + "</td>\n"
+                "</tr>\n";
+    }
+    draw += "</table>>];";
+    draw += "\n\n}\n";
+    create_FileReport(draw, path);
+    cout << csnt_rp.GREEN << "RESPUESTA:" << csnt_rp.NC << " El reporte JOURNALING ha sido generado correctamente " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+    return;
+}
+
+void reportes::bm_inode(map<string, string> param_got, vector<disco::Mount> list_mount){
+
+    if (param_got.size() == 0){
+        return;
+    }
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string name = param_got["-name"].c_str(); //Este es el nombre del reporte
+    string path = param_got["-path"].c_str();
+    string id = param_got["-id"].c_str();
+    string ruta = param_got["-ruta"].c_str();
+
+    /*Formateo de datos*/
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+    util_rp.createDirectory(path);
+
+    /*Flujo del void*/
+    disco::Mount tempMount = getMount(id, list_mount);
+    if (tempMount.status == '0'){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha encontrado el id solicitado " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+
+    //Se crean variables que se utilizaran posteriormente
+    string path_aux = tempMount.path;
+    string name_aux = tempMount.name;
+    time_t date_mounted = tempMount.date_mounted;
+    int part_start_partition = tempMount.part_start;
+    
+    //Obtengo la estructura del superbloque
+    disco::Superblock spb;
+    FILE *file = fopen(path_aux.c_str(), "rb");
+    fseek(file, part_start_partition, SEEK_SET);
+    int read = fread(&spb, csnt_rp.SIZE_SPB, 1, file);
+    if (read <= 0){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha podido leer el disco " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+
+    unsigned char buffer[spb.s_inodes_count];
+    fseek(file, spb.s_bm_inode_start, SEEK_SET);
+    fread(&buffer, sizeof(char), spb.s_inodes_count, file);
+    fclose(file);
+
+    if (spb.s_filesystem_type == 0)    {
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha formateado esta particion " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+    
+    int columnas = 20;
+    int filas = round(spb.s_inodes_count/columnas);
+
+    string draw;
+    draw = "digraph G{\n"
+            "forcelabels= true;\n"
+            "node [shape = plaintext];\n"
+            "general [label = <\n";
+    for (int i = 0; i < spb.s_inodes_count; i++){
+        if (i % columnas== 0){
+            draw += "\n";
+            draw += buffer[i];
+        }else if(i % columnas != 0){
+            draw += buffer[i];
+        }
+    }
+    draw += "\n>];";
+    draw += "\n}\n";
+    create_FileReport(draw, path);
+    cout << csnt_rp.GREEN << "RESPUESTA:" << csnt_rp.NC << " El reporte BM_INODE ha sido generado correctamente " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+
+}
+
+void reportes::bm_block(map<string, string> param_got, vector<disco::Mount> list_mount){
+
+    if (param_got.size() == 0){
+        return;
+    }
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string name = param_got["-name"].c_str(); //Este es el nombre del reporte
+    string path = param_got["-path"].c_str();
+    string id = param_got["-id"].c_str();
+    string ruta = param_got["-ruta"].c_str();
+
+    /*Formateo de datos*/
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+    util_rp.createDirectory(path);
+
+    /*Flujo del void*/
+    disco::Mount tempMount = getMount(id, list_mount);
+    if (tempMount.status == '0'){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha encontrado el id solicitado " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+
+    //Se crean variables que se utilizaran posteriormente
+    string path_aux = tempMount.path;
+    string name_aux = tempMount.name;
+    time_t date_mounted = tempMount.date_mounted;
+    int part_start_partition = tempMount.part_start;
+    
+    //Obtengo la estructura del superbloque
+    disco::Superblock spb;
+    FILE *file = fopen(path_aux.c_str(), "rb");
+    fseek(file, part_start_partition, SEEK_SET);
+    int read = fread(&spb, csnt_rp.SIZE_SPB, 1, file);
+    if (read <= 0){
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha podido leer el disco " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+
+    unsigned char buffer[spb.s_blocks_count];
+    fseek(file, spb.s_bm_block_start, SEEK_SET);
+    fread(&buffer, sizeof(char), spb.s_blocks_count, file);
+    fclose(file);
+
+    if (spb.s_filesystem_type == 0)    {
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha formateado esta particion " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        return;
+    }
+    
+    int columnas = 20;
+    int filas = spb.s_blocks_count/columnas;
+
+    string draw;
+    draw = "digraph G{\n"
+            "forcelabels= true;\n"
+            "node [shape = plaintext];\n"
+            "general [label = <\n";
+    for (int i = 0; i < spb.s_blocks_count; i++){
+        if (i % columnas == 0){
+            draw += "\n";
+            draw += buffer[i];
+        }else if(i % columnas != 0){
+            draw += buffer[i];
+        }
+    }
+    draw += "\n>];";
+    draw += "\n}\n";
+    
+    create_FileReport(draw, path);
+    cout << csnt_rp.GREEN << "RESPUESTA:" << csnt_rp.NC << " El reporte BM_BLOCK ha sido generado correctamente " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+
+}
+
 disco::Mount reportes::getMount(string id, vector<disco::Mount> list_mount){
     disco::Mount response;
     response.status = '0';
@@ -493,19 +735,21 @@ disco::Mount reportes::getMount(string id, vector<disco::Mount> list_mount){
 void reportes::create_FileReport(string draw, string path){
 
     util_rp.createDirectory(path);
-    string extension = "-T" + path.substr(path.size()-3,3);
+    
     int size = path.size() - 1;
-    int acum = 1;
     while (path.substr(size, 1) != "/"){
         size--;
-        acum++;
     }
-    size++;
+    int posicion_extension = path.size()-1;
+    while (path.substr(posicion_extension, 1) != "."){
+        posicion_extension--;
+    }
+    string extension = "-T" + path.substr(posicion_extension+1, path.size()-1);
     string ubicacion_salida = path.substr(0, path.size() - 4);
     string ubicacion_dot = path.substr(0, path.size() - 4)+".dot";
-    FILE* file = fopen(ubicacion_dot.c_str(), "w+");
-    fwrite(draw.c_str(), draw.size(), 1, file);
-    fclose(file);
+    FILE* file_report = fopen(ubicacion_dot.c_str(), "w+");
+    fwrite(draw.c_str(), draw.size(), 1, file_report);
+    fclose(file_report);
     string function = "dot " + extension + " " + ubicacion_dot +" -o " + ubicacion_salida;
     system(function.c_str());
     remove(ubicacion_dot.c_str());

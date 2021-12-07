@@ -84,10 +84,11 @@ public:
     } Superblock;
 
     typedef struct {
+        int id_journal = -1; // Debe iniciar en 0
         char operation; //C = Creacion; R = Lectura; U = Edicion; D = Eliminacion
         char type; //0 = Carpeta, 1 = Archivo
         char nombre[12]; //Nombre archivo o directorio
-        string content = ""; //Datos contenidos
+        char content[64]; //Datos contenidos
         time_t date; //Fecha de transaccion
         char propietario[10]; //Propietario de archivo o directorio
         int permiso = -1; //Permisos que posee el archivo o directorio

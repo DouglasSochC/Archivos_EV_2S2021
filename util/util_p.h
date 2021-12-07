@@ -16,7 +16,7 @@ public:
     bool check_correctExtEXEC(string path);
     bool check_existFile(string path);
     float round(float valor);
-
+    void insertDatainChar(string data, char* buffer);
     void createDirectory(string path);
     bool existFile(string path);
     void insertDatainVector(vector<string> *main_list, vector<string> data);
