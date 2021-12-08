@@ -101,6 +101,7 @@ public:
 
     //METODOS PARA TEST - ELIMINAR ANTES DE ULTIMO PUSH
     void test_asignacionFit();
+    void pruebaEXT3(int journaling_start, string path);
 };
 
 #endif //ADM_DISCOS_H

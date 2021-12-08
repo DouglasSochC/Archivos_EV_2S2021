@@ -114,16 +114,13 @@ void adm_ug::mkgrp(map<string, string> param_got, disco::User UserLoggedIn){
     disco::Inode inode_user;
     fseek(file, sp_user.s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
     fread(&inode_user, csnt_ug.SIZE_I, 1, file);
-
+    //strlen - Este cuenta si ya esta por completo el char[64], ojo solo se puede ingresar 63 caracteres
     string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
     disco::Group response = checkGroup(text, name);
     if (response.nombre == name){
         cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya existe el grupo que desea crear " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
         return;
     }
-    
-
-
 }
 
 string adm_ug::getArchiveUserTXT(int part_start_partition, string path){
@@ -157,12 +154,12 @@ string adm_ug::getArchiveUserTXT(int part_start_partition, string path){
         getContentByType(&response, "BSI", path, sp_user, inode_user.i_block[12]);
     }
 
-    //Apuntador 14 - FALTA ANALISARLO
+    //Apuntador 14 - Se apunta a una estructura de apuntadores
     if (inode_user.i_block[13] == -1){
         getContentByType(&response, "BDI", path, sp_user, inode_user.i_block[13]);
     }
 
-    //Apuntador 15 - FALTA ANALISARLO
+    //Apuntador 15 - Se apunta a una estructura de apuntadores
     if (inode_user.i_block[14] == -1){
         getContentByType(&response, "BTI", path, sp_user, inode_user.i_block[14]);
     }
@@ -221,6 +218,8 @@ disco::User adm_ug::checkUser(string user_txt, string user, string psw){
             string linea = user_txt.substr(actual, tamanio);            
             int inicio_valor = 0;
             int tamanio_valor = 0;
+
+            //Ingreso en un vector todos los registro que encuentre
             for (int j = 0; j < linea.size(); j++){
                 if (linea.substr(j, 1) == ","){
                     temp.push_back(linea.substr(inicio_valor, tamanio_valor));
@@ -242,6 +241,8 @@ disco::User adm_ug::checkUser(string user_txt, string user, string psw){
                     response.grupo = temp[2];
                     response.id = atoi(temp[0].c_str());
                     response.tipo = temp[1][0];
+                    response.posicion_registro = actual;
+                    response.tamanio_registro = tamanio;
                     break;
                 }                
             }
@@ -283,10 +284,14 @@ disco::Group adm_ug::checkGroup(string user_txt, string nombre){
                 if (temp[2] == nombre){
                     response.id = atoi(temp[0].c_str());
                     response.nombre = temp[2].c_str();
+                    response.posicion_registro = actual;
+                    response.tamanio_registro = tamanio;
                     break;
                 }else if(atoi(temp[0].c_str()) >= response.id){
                     response.id = atoi(temp[0].c_str());
                     response.nombre = temp[2].c_str();
+                    response.posicion_registro = actual;
+                    response.tamanio_registro = tamanio;
                 }
             }
             actual = i + 1;

@@ -148,7 +148,7 @@ El programa podrá ejecutar scripts con el comando exec. Debe mostrar el conteni
 
 #### 1. REP
 
-Recibirá el nombre del reporte que se desea y lo generará con graphviz en una carpeta existente.
+Recibirá el nombre del reporte que se desea y lo generará con graphviz en una carpeta existente. El uso de este comando no depende de una sesion activa.
 
 | Parámetro | Categoría   | Descripción                                                                                                                                                                                                                   |
 |-----------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -164,3 +164,12 @@ Este reporte mostrará la estructura de las particiones, el mbr del disco y el p
 
 ##### 1.3 Reporte SB
 Muestra toda la información del superbloque en una tabla.
+
+##### 1.4 Reporte JOURNALING
+Muestra toda la información del superbloque en una tabla.
+
+##### 1.5 Reporte BM_INODE
+Este reporte mostrará la información del bit map de inodos, mostará todos los bits, libres o utilizados. Este reporte se generara en un archivo de texto mostrando 20 registros por línea.
+
+##### 1.6 Reporte BM_BLOCK
+Este reporte mostrará la información del bit map de bloques, mostará todos los bits, libres o utilizados. Este reporte se generara en un archivo de texto que mostrara 20 registros por línea.

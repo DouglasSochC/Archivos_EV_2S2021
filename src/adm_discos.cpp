@@ -828,10 +828,11 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     FILE *format_partition = fopen(partitionMount.path.c_str(), "rb+");
     //Se almacena la estructura de superbloque
     fseek(format_partition, partitionMount.part_start, SEEK_SET);
-    fwrite(&superblock, sizeof(disco::Superblock), 1, format_partition);
+    fwrite(&superblock, csnt_admdcs.SIZE_SPB, 1, format_partition);
 
     //Seteo de estructuras journaling
     disco::Journaling seteando_journal;
+    fseek(format_partition, journaling_start, SEEK_SET);
     for (int i = 0; i < total_block_journaling; i++){
         fwrite(&seteando_journal, csnt_admdcs.SIZE_J, 1, format_partition);
     }
@@ -910,18 +911,19 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     fwrite(&temp_folderblock, csnt_admdcs.SIZE_FB, 1, save_structs);
 
     //Se crea el journaling de la primera transaccion
-    disco::Journaling journaling1;
-    journaling1.id_journal = 1;
-    journaling1.operation = 'C';
-    journaling1.type = '0';
-    strcpy(journaling1.nombre, "/");
-    strcpy(journaling1.content, "");
-    journaling1.date = time(nullptr);
-    strcpy(journaling1.propietario, "root");
-    journaling1.permiso = 664;
+    disco::Journaling *journaling1 = new disco::Journaling();
+    journaling1->id_journal = 1;
+    journaling1->operation = 'C';
+    journaling1->type = '0';
+    strcpy(journaling1->nombre, "/");
+    //strcpy(journaling1.content, "");
+    journaling1->content = "hola mundo!";
+    journaling1->date = time(nullptr);
+    strcpy(journaling1->propietario, "root");
+    journaling1->permiso = 664;
     //Se almacena el journaling
     fseek(save_structs, journaling_start, SEEK_SET);
-    fwrite(&journaling1, csnt_admdcs.SIZE_J, 1, save_structs);
+    fwrite(journaling1, csnt_admdcs.SIZE_J, 1, save_structs);
 
     //Defino los datos predeterminados que posee el archivo user.txt
     string data = csnt_admdcs.USER_TXT;
@@ -955,19 +957,20 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     fwrite(&temp_archiveblock, csnt_admdcs.SIZE_AB, 1, save_structs);
 
     //Se crea el journaling de la segunda transaccion
-    disco::Journaling journaling2;
-    journaling2.id_journal = 2;
-    journaling2.operation = 'C';
-    journaling2.type = '1';
-    strcpy(journaling2.nombre, "user.txt");
-    strcpy(journaling2.content, data.c_str());
-    journaling2.date = time(nullptr);
-    strcpy(journaling2.propietario, "root");
-    journaling2.permiso = 664;
+    disco::Journaling *journaling2 = new disco::Journaling();
+    journaling2->id_journal = 2;
+    journaling2->operation = 'C';
+    journaling2->type = '1';
+    strcpy(journaling2->nombre, "user.txt");
+    journaling2->content = data;
+    //strcpy(journaling2.content, data.c_str());
+    journaling2->date = time(nullptr);
+    strcpy(journaling2->propietario, "root");
+    journaling2->permiso = 664;
     //Se almacena el journaling
     fseek(save_structs, journaling_start + csnt_admdcs.SIZE_J, SEEK_SET);
-    fwrite(&journaling2, csnt_admdcs.SIZE_J, 1, save_structs);
-
+    fwrite(journaling2, csnt_admdcs.SIZE_J, 1, save_structs);
+    
     fclose(save_structs);
 }
 
@@ -1309,3 +1312,12 @@ void adm_discos::test_asignacionFit(){
 
 }
 
+void adm_discos::pruebaEXT3(int journaling_start, string path){
+    FILE *save_structs = fopen(path.c_str(), "rb");
+    disco::Journaling *tempJournal = new disco::Journaling();
+    //disco::Journaling tempJournal; // = new disco::Journaling();
+    fseek(save_structs, journaling_start, SEEK_SET);
+    fread(tempJournal, csnt_admdcs.SIZE_J, 1, save_structs);
+    fread(tempJournal, csnt_admdcs.SIZE_J, 1, save_structs);
+    fclose(save_structs);
+}

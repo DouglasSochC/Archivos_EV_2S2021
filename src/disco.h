@@ -88,10 +88,10 @@ public:
         char operation; //C = Creacion; R = Lectura; U = Edicion; D = Eliminacion
         char type; //0 = Carpeta, 1 = Archivo
         char nombre[12]; //Nombre archivo o directorio
-        char content[64]; //Datos contenidos
+        string content; //Datos contenidos
         time_t date; //Fecha de transaccion
         char propietario[10]; //Propietario de archivo o directorio
-        int permiso = -1; //Permisos que posee el archivo o directorio
+        int permiso = 0; //Permisos que posee el archivo o directorio
     } Journaling;
 
     typedef struct {
@@ -128,11 +128,15 @@ public:
         string usuario = ""; // Nombre del usuario
         string contrasenia = ""; // Contrasenia del usuario
         Mount montura; //Montura
+        int posicion_registro = -1; // Es la posicion en la que se encuentra ubicado el registro dentro del archivo user.txt
+        int tamanio_registro = -1; //Es el tamanio del registro encontrado
     } User;
 
     typedef struct {
         int id = -1; // -1 = Sin uso; 0 = Eliminado; >0 = Id activo
         string nombre = ""; // Nombre del grupo
+        int posicion_registro = -1; // Es la posicion en la que se encuentra ubicado el registro dentro del archivo user.txt
+        int tamanio_registro = -1; //Es el tamanio del registro encontrado
     } Group;
 
 };

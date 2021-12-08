@@ -509,7 +509,7 @@ void reportes::journaling(map<string, string> param_got, vector<disco::Mount> li
     
     //Obtengo la estructura del superbloque
     disco::Superblock spb;
-    FILE *file_journaling = fopen(path_aux.c_str(), "rb");
+    FILE *file_journaling = fopen(path_aux.c_str(), "rb+");
     fseek(file_journaling, part_start_partition, SEEK_SET);
     int read = fread(&spb, csnt_rp.SIZE_SPB, 1, file_journaling);
     if (read <= 0){
@@ -520,26 +520,22 @@ void reportes::journaling(map<string, string> param_got, vector<disco::Mount> li
         cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " No se ha formateado esta particion " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
         return;
     }else if(spb.s_filesystem_type == 2){
-        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " Es un sistema EXT2 por lo tanto no se tiene un jornaling " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
+        cout << csnt_rp.RED << "ERROR:" << csnt_rp.NC << " Es un sistema EXT2 por lo tanto no se tiene un journaling " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
         return;
     }
     
+    //Se busca los journaling realizados
     vector<disco::Journaling> listJournal;
-    disco::Journaling tempJournal;
-    //Ayuda a que entre a la lectura del disco
-    tempJournal.permiso = 664;
-    int acum = 0;
-    while (tempJournal.permiso != -1){
-        fseek(file_journaling, part_start_partition + csnt_rp.SIZE_SPB + acum * (csnt_rp.SIZE_J), SEEK_SET);
-        fread(&tempJournal, csnt_rp.SIZE_J, 1, file_journaling);
-        if (tempJournal.permiso != -1){
-            listJournal.push_back(tempJournal);
-            tempJournal = disco::Journaling();
-            tempJournal.permiso = 664;
+    fseek(file_journaling, part_start_partition + csnt_rp.SIZE_SPB, SEEK_SET);
+    while (true){
+        disco::Journaling *tempJournal = new disco::Journaling();
+        fread(tempJournal, csnt_rp.SIZE_J, 1, file_journaling);
+        if (tempJournal->id_journal != -1){
+            listJournal.push_back(*tempJournal);
+        }else{
+            break;
         }
-        acum++;
     }
-    tempJournal = disco::Journaling();
     fclose(file_journaling);
 
     struct tm *tm;
