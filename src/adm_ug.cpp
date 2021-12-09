@@ -144,7 +144,7 @@ void adm_ug::mkgrp(map<string, string> param_got, disco::User UserLoggedIn){
 
     //Se ingresa un journal en el caso de que sea un sistema EXT3
     if (sp_user->s_filesystem_type == 3){
-        insertJournal(registro_journal, actualMount, *sp_user);
+        insertJournal(registro_journal, 'A', actualMount, *sp_user);
     }
 
     if (registro.size() == 0){
@@ -153,6 +153,77 @@ void adm_ug::mkgrp(map<string, string> param_got, disco::User UserLoggedIn){
         cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya no hay mas espacio para poder ingresar el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
     }
     
+}
+
+void adm_ug::rmgrp(map<string, string> param_got, disco::User UserLoggedIn){
+    if (param_got.size() == 0){return;}
+
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string name = param_got["-name"].c_str();
+
+    /*Formateo de datos*/
+    name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
+
+    /*Flujo del void*/
+    //Se verifica que halla una sesion activa
+    if (UserLoggedIn.id == -1){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No hay una sesion activa " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se obtiene la montura
+    disco::Mount actualMount = UserLoggedIn.montura;
+    string path = actualMount.path;
+    if (actualMount.status == '0'){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el id " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se verifica que sea usuario root
+    bool isRoot = (UserLoggedIn.usuario == "root" && UserLoggedIn.contrasenia == "123");
+    if (!isRoot){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Solo un usuario root puede realizar esta accion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+    
+    //Creo una variable de tipo FILE
+    FILE *file = fopen(path.c_str(), "rb+");
+
+    //Obtengo el super bloque
+    disco::Superblock *sp_user = new disco::Superblock();
+    fseek(file, actualMount.part_start, SEEK_SET);
+    fread(sp_user, csnt_ug.SIZE_SPB, 1, file);
+    if (sp_user->s_filesystem_type == 0)    {
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No se ha formateado esta particion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se obtiene el inodo del user.txt
+    disco::Inode *inode_user = new disco::Inode();
+    fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
+    fread(inode_user, csnt_ug.SIZE_I, 1, file);
+    
+    string text = getArchiveUserTXT(actualMount.part_start, path);
+    disco::Group response = checkGroup(text, name);
+    if (response.nombre != name){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el grupo que desea eliminar " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+    int posicion_registro_encontrado = response.posicion_registro;
+    changeStatusRow(sp_user, inode_user, actualMount, &posicion_registro_encontrado);
+
+    //Se almacenan los cambios
+    fclose(file);
+
+    //Se ingresa un journal en el caso de que sea un sistema EXT3
+    if (sp_user->s_filesystem_type == 3){
+        string registro = to_string(response.id)+","+"G"+","+response.nombre+";"+"0,"+"G"+","+response.nombre;
+        insertJournal(registro, 'U', actualMount, *sp_user);
+    }
+
+    cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " Se eliminado correctamente el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+
 }
 
 string adm_ug::getArchiveUserTXT(int part_start_partition, string path){
@@ -310,14 +381,18 @@ void adm_ug::setContentByTypePointer(string tipo_puntero, int pos_block, string 
             //Esta variable define la cantidad de caracteres que se estan utilizando dentro del b_content
             int cc_utilizados = strlen(archive_bd->b_content);
             //Esta variable define la cantidad de caracteres que aun se pueden ingresar en el b_content
-            int cc_disponible = 64 - cc_utilizados;
+            int cc_disponible = 63 - cc_utilizados;
+            if (cc_disponible <= 0){
+                return;
+            }            
+
             //Esta variable define el tamanio del nuevo contenido que se va a escribir
             int tamanio_contenido = registro->size();
             //Esta variable define la cantidad de caracteres que se van a utilizar
             int cc_a_utilizar = (cc_disponible - tamanio_contenido) >= 0 ? registro->size(): cc_disponible;
-
             string contenido_a_ingresar = registro->substr(0, cc_a_utilizar);
-            *registro = registro->substr(cc_a_utilizar, registro->size());
+            string contenido_faltante = registro->substr(cc_a_utilizar, registro->size()-cc_a_utilizar);
+            *registro = contenido_faltante;
             strcat(archive_bd->b_content, contenido_a_ingresar.c_str());
             
             //Se modifica el tamanio del inodo
@@ -514,7 +589,7 @@ disco::Group adm_ug::checkGroup(string user_txt, string nombre){
             }
 
             if (temp[1] == "G"){
-                if (temp[2] == nombre){
+                if (temp[2] == nombre && atoi(temp[0].c_str()) > 0){
                     response.id = atoi(temp[0].c_str());
                     response.nombre = temp[2].c_str();
                     response.posicion_registro = actual;
@@ -537,7 +612,7 @@ disco::Group adm_ug::checkGroup(string user_txt, string nombre){
     return response;
 }
 
-void adm_ug::insertJournal(string contenido, disco::Mount mount_temp, disco::Superblock spb){
+void adm_ug::insertJournal(string contenido, char operacion, disco::Mount mount_temp, disco::Superblock spb){
 
     //Creo una variable de tipo FILE
     FILE *file = fopen(mount_temp.path.c_str(), "rb+");
@@ -565,7 +640,7 @@ void adm_ug::insertJournal(string contenido, disco::Mount mount_temp, disco::Sup
     //Journal nuevo
     disco::Journaling *journal = new disco::Journaling();
     journal->id_journal = posicion + 1;
-    journal->operation = 'U';
+    journal->operation = operacion;
     journal->type = '1';
     strcpy(journal->nombre, "user.txt");
     journal->content = contenido;
@@ -623,3 +698,86 @@ void adm_ug::createArchiveBlock(int position, string path, disco::Superblock spb
     fwrite(&tempBlock, csnt_ug.SIZE_AB, 1, file);
     fclose(file);
 }
+
+void adm_ug::changeStatusRow(disco::Superblock *spb, disco::Inode *inode_user, disco::Mount mount_temp, int *posicion_registro){
+
+    bool isUpdate = false;
+    //Apuntadores del 1 al 12
+    for (int i = 0; i < 12; i++){
+        if (inode_user->i_block[i] != -1 && isUpdate == false){
+            updateContentByTypePointer("BD", inode_user->i_block[i], mount_temp.path, spb, posicion_registro, &isUpdate);
+        }
+    }
+
+    //Apuntador 13 - Se apunta a una estructura de apuntadores
+    if (inode_user->i_block[12] != -1 && isUpdate == false){
+        updateContentByTypePointer("BSI", inode_user->i_block[12], mount_temp.path, spb, posicion_registro, &isUpdate);
+    }
+
+    //Apuntador 14 - Se apunta a una estructura de apuntadores
+    if (inode_user->i_block[13] != -1 && isUpdate == false){
+        updateContentByTypePointer("BDI", inode_user->i_block[13], mount_temp.path, spb, posicion_registro, &isUpdate);
+    }
+
+    //Apuntador 15 - Se apunta a una estructura de apuntadores
+    if (inode_user->i_block[14] != -1 && isUpdate == false){
+        updateContentByTypePointer("BTI", inode_user->i_block[14], mount_temp.path, spb, posicion_registro, &isUpdate);
+    }
+
+}
+
+void adm_ug::updateContentByTypePointer(string tipo_puntero, int pos_block, string path, disco::Superblock *spb, int *posicion_registro, bool *isUpdate){
+    FILE *file = fopen(path.c_str(), "rb+");
+    if (tipo_puntero == "BD"){
+        disco::Archiveblock tempArchive;
+        fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_AB), SEEK_SET);
+        fread(&tempArchive, csnt_ug.SIZE_AB, 1, file);
+        
+        int posicion_inicial_lectura = 0;
+        for (int i = 0; i < 63; i++){
+            *posicion_registro -= 1;
+            posicion_inicial_lectura += 1;
+            if (*posicion_registro == 0){
+                break;
+            }
+        }
+        if (posicion_inicial_lectura == 63){
+            return;
+        }else{
+            tempArchive.b_content[posicion_inicial_lectura] = '0';
+            fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_AB), SEEK_SET);
+            fwrite(&tempArchive, csnt_ug.SIZE_AB, 1, file);
+            *isUpdate = true;
+        }
+    }else if(tipo_puntero == "BSI"){
+        disco::Pointerblock tempPointer;
+        fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
+        fread(&tempPointer, csnt_ug.SIZE_PB, 1, file);
+        for (int i = 0; i < 15; i++){
+            if (tempPointer.b_pointers[i] != -1){
+                updateContentByTypePointer("BD", tempPointer.b_pointers[i], path, spb, posicion_registro, isUpdate);
+            }
+        }
+    }else if(tipo_puntero == "BDI"){
+        disco::Pointerblock tempPointer;
+        fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
+        fread(&tempPointer, csnt_ug.SIZE_PB, 1, file);
+        for (int i = 0; i < 15; i++){
+            if (tempPointer.b_pointers[i] != -1){
+                updateContentByTypePointer("BSI", tempPointer.b_pointers[i], path, spb, posicion_registro, isUpdate);
+            }
+        }       
+    }else if(tipo_puntero == "BTI"){
+        disco::Pointerblock tempPointer;
+        fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
+        fread(&tempPointer, csnt_ug.SIZE_PB, 1, file);
+        for (int i = 0; i < 15; i++){
+            if (tempPointer.b_pointers[i] != -1){
+                updateContentByTypePointer("BDI", tempPointer.b_pointers[i], path, spb, posicion_registro, isUpdate);
+            }
+        } 
+    }
+    fclose(file);
+}
+
+

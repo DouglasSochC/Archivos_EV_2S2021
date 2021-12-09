@@ -85,7 +85,7 @@ public:
 
     typedef struct {
         int id_journal = -1; // Debe iniciar en 0
-        char operation; //C = Creacion; R = Lectura; U = Edicion; D = Eliminacion
+        char operation; //C = Creacion; R = Lectura; U = Modifiacion; D = Eliminacion; A = Agregacion
         char type; //0 = Carpeta, 1 = Archivo
         char nombre[12]; //Nombre archivo o directorio
         string content; //Datos contenidos

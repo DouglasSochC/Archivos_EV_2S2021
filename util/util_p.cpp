@@ -121,3 +121,7 @@ float util_p::round(float valor){
     sscanf(str, "%f", &valor); 
     return valor;
 }
+
+bool util_p::hasSpecialCharacter(string texto){
+    return texto.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_ ") != string::npos;
+}

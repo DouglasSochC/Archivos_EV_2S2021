@@ -456,12 +456,56 @@ map<string, string> parameters::param_mkgrp(vector<string> tokens){
     }
     string comentario = map_u["-comentario"];
     string name = map_u["-name"];
+    ///*Formateo el name
+    name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
 
     if (!name.empty()){
         if (name.length() > 10){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No se puede ingresar el grupo debido a que excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
-        }        
+        }else if(util_prmts.hasSpecialCharacter(name)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre asignado para el grupo posee caracteres no soportados por el sistema de archivos " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-name) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
+
+map<string, string> parameters::param_rmgrp(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-name")){
+                cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
+        }
+    }
+    string comentario = map_u["-comentario"];
+    string name = map_u["-name"];
+
+    if (!name.empty()){
+        if (name.length() > 10){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No se puede ingresar el grupo debido a que excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(util_prmts.hasSpecialCharacter(name)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre asignado para el grupo posee caracteres no soportados por el sistema de archivos " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
     }else{
         cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-name) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
         map_u.clear();

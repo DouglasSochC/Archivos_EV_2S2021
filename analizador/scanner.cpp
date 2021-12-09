@@ -99,6 +99,9 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "mkgrp"){
             map<string, string> param_got = prmts_scnr.param_mkgrp(tokens);
             admug_scnr.mkgrp(param_got, scrp_UsuarioLog);
+        }else if(comando == "rmgrp"){
+            map<string, string> param_got = prmts_scnr.param_rmgrp(tokens);
+            admug_scnr.rmgrp(param_got, scrp_UsuarioLog);
         }else if(comando == "cat"){
             map<string, string> param_got = prmts_scnr.param_cat(tokens);
             //scrp_UsuarioLog = admcap_scnr.mkdir(scrp_UsuarioLog);

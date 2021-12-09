@@ -120,6 +120,22 @@ Este comando se utiliza para iniciar sesión en el sistema. No se puede iniciar 
 
 Este comando se utiliza para cerrar sesión. Debe haber una sesión activa anteriormente para poder utilizarlo, si no, debe mostrar un mensaje de error. Este comando no recibe parámetros.
 
+#### 3. MKGRP
+
+Este comando creará un grupo para los usuarios de la partición y se guardará en el archivo users.txt de la partición, este comando solo lo puede utilizar el usuario root. Si otro usuario lo intenta ejecutar, deberá mostrar un mensaje de error, si el grupo a ingresar ya existe deberá mostrar un mensaje de error. Recibirá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -name       | Obligatorio | Indicará el nombre que tendrá el grupo |
+
+#### 4. RMGRP
+
+Este comando eliminará un grupo para los usuarios de la partición. Solo lo puede utilizar el usuario root, si lo utiliza alguien más debe mostrar un error. Recibirá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -name       | Obligatorio | Indicará el nombre del grupo a eliminar. Si el grupo no se encuentra dentro de la partición debe mostrar un error. |
+
 ### 📁 Administracion de Carpetas, Archivos y Permisos
 
 Estos comandos permitirán crear archivos y carpetas, así como editarlos, copiarlos, moverlos y eliminarlos. Los permisos serán para el usuario propietario del archivo, para el grupo al que pertenece y para otros usuarios, así como en Linux.
