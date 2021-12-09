@@ -310,6 +310,8 @@ void adm_discos::mkfs(map<string, string> param_got, vector<disco::Mount> listMo
     temp_spb.s_mtime = date_mounted;
     temp_spb.s_umtime = 0;
     temp_spb.s_mnt_count = 1;
+    temp_spb.s_first_blo = 2;
+    temp_spb.s_first_ino = 2;
     if (fs == "2fs") {
         temp_spb.s_filesystem_type = 2;
         mkfs_EXT2(temp_spb, tempMount);
@@ -916,8 +918,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     journaling1->operation = 'C';
     journaling1->type = '0';
     strcpy(journaling1->nombre, "/");
-    //strcpy(journaling1.content, "");
-    journaling1->content = "hola mundo!";
+    journaling1->content = "";
     journaling1->date = time(nullptr);
     strcpy(journaling1->propietario, "root");
     journaling1->permiso = 664;
