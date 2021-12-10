@@ -30,7 +30,7 @@ public:
     const int SIZE_FB = sizeof(disco::Folderblock); //File Block
     const int SIZE_PB = sizeof(disco::Pointerblock); //Pointer Block
     
-    //COLORES
+    //COLORES - MENSAJES
 
     const string NC = "\e[0m";
     const string RED = "\e[0;31m";
@@ -38,6 +38,13 @@ public:
     const string YELLOW = "\e[0;33m";
     const string BLUE = "\e[0;34m";
     const string CYAN = "\e[0;36m";
+
+    //COLORES - TABLAS
+
+    const string COLOR_INODE = "#84B1F2";
+    const string COLOR_FOLDER = "#F2EA84";
+    const string COLOR_ARCHIVE = "#F284ED";
+    const string COLOR_POINTER = "#38F50E";    
 
     //USUARIOS Y GRUPOS INICIALES
 

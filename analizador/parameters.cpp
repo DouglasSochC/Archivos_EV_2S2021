@@ -638,7 +638,7 @@ map<string, string> parameters::param_rep(vector<string> tokens){
     string ruta = map_u["-ruta"];
 
     if (!name.empty() && !path.empty() && !id.empty()){
-        if (!(name == "mbr" || name == "disk" || name == "sb" || name == "journaling" || name == "bm_inode" || name == "bm_block")){
+        if (!(name == "mbr" || name == "disk" || name == "sb" || name == "journaling" || name == "bm_inode" || name == "bm_block" || name == "tree")){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro NAME es incorrecto " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
         }else if(!util_prmts.isNumber(map_u["-root"])){

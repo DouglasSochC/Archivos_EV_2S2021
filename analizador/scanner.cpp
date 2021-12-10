@@ -130,6 +130,8 @@ void scanner::exec_command(vector<string> tokens){
                     rp_scnr.bm_inode(param_got, admdcs_scnr.getListMount());
                 }else if(name_report == "bm_block"){
                     rp_scnr.bm_block(param_got, admdcs_scnr.getListMount());
+                }else if(name_report == "tree"){
+                    rp_scnr.tree(param_got, admdcs_scnr.getListMount());
                 }
             }
         }else if(comando == "test1"){
