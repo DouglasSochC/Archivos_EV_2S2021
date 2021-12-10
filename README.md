@@ -136,6 +136,24 @@ Este comando eliminará un grupo para los usuarios de la partición. Solo lo pue
 |-----------|-------------|-------------------------------------------------------------------------------------------------|
 | -name       | Obligatorio | Indicará el nombre del grupo a eliminar. Si el grupo no se encuentra dentro de la partición debe mostrar un error. |
 
+#### 5. MKUSR
+
+Este comando crea un usuario en la partición. Solo lo puede ejecutar el usuario root, si lo utiliza otro usuario deberá mostrar un error. Recibirá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -usr       | Obligatorio | Indicará el nombre del usuario a crear, si ya existe, deberá mostrar un error indicando que ya existe el usuario. Máximo: 10 caracteres.|
+| -pwd       | Obligatorio | Indicará la contraseña del usuario. Máximo: 10 caracteres. |
+| -grp       | Obligatorio | Indicará el grupo al que pertenecerá el usuario. Debe de existir en la partición en la que se está creando el usuario, si no debe mostrar un mensaje de error. Máximo: 10 caracteres.|
+
+#### 6. RMUSR
+
+Este comando elimina un usuario en la partición. Solo lo puede ejecutar el usuario root, si lo utiliza otro usuario deberá mostrar un error. Recibirá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -usr       | Obligatorio | Indicará el nombre del usuario a eliminar, si no existe, deberá mostrar un error indicando que el usuario no existe. |
+
 ### 📁 Administracion de Carpetas, Archivos y Permisos
 
 Estos comandos permitirán crear archivos y carpetas, así como editarlos, copiarlos, moverlos y eliminarlos. Los permisos serán para el usuario propietario del archivo, para el grupo al que pertenece y para otros usuarios, así como en Linux.

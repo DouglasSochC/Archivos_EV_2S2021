@@ -398,6 +398,7 @@ map<string, string> parameters::param_cat(vector<string> tokens){
 /*FIN CAP*/
 
 /*INI UG*/
+
 map<string, string> parameters::param_login(vector<string> tokens){
     
     map<string, string> map_u;
@@ -504,6 +505,95 @@ map<string, string> parameters::param_rmgrp(vector<string> tokens){
             map_u.clear();
         }else if(util_prmts.hasSpecialCharacter(name)){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre asignado para el grupo posee caracteres no soportados por el sistema de archivos " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-name) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
+
+map<string, string> parameters::param_mkusr(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-usr" || llave == "-pwd" || llave == "-grp")){
+                cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
+        }
+    }
+    string comentario = map_u["-comentario"];
+    string usr = map_u["-usr"];
+    string pwd = map_u["-pwd"];
+    string grp = map_u["-grp"];
+
+    if (!usr.empty() && !pwd.empty() && !grp.empty()){
+        if (usr.length() > 10){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del usuario excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(pwd.length() > 10){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " La contraseña excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(grp.length() > 10){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del grupo excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(util_prmts.hasSpecialCharacter(grp)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del grupo posee caracteres no soportados por el sistema de archivos " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(util_prmts.hasSpecialCharacter(usr)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del usuario posee caracteres no soportados por el sistema de archivos " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-usr, -pwd, -grp) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
+
+map<string, string> parameters::param_rmusr(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-usr")){
+                cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El dato " << tokens[i] << " es incorrecto por lo tanto no se toma en cuenta" << endl;
+        }
+    }
+    string comentario = map_u["-comentario"];
+    string usr = map_u["-usr"];
+
+    if (!usr.empty()){
+        if (usr.length() > 10){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del usuario excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(util_prmts.hasSpecialCharacter(usr)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del usuario posee caracteres no soportados por el sistema de archivos " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
         }
     }else{

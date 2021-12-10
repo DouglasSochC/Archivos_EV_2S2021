@@ -22,6 +22,8 @@ public:
     map<string, string> param_login(vector<string> tokens);
     map<string, string> param_mkgrp(vector<string> tokens);
     map<string, string> param_rmgrp(vector<string> tokens);
+    map<string, string> param_mkusr(vector<string> tokens);
+    map<string, string> param_rmusr(vector<string> tokens);
     map<string, string> param_rep(vector<string> tokens);
 };
 

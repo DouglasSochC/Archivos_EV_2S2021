@@ -17,10 +17,12 @@ public:
     disco::User logout(disco::User UserLoggedIn);
     void mkgrp(map<string, string> param_got, disco::User UserLoggedIn);
     void rmgrp(map<string, string> param_got, disco::User UserLoggedIn);
+    void mkusr(map<string, string> param_got, disco::User UserLoggedIn);
+    void rmusr(map<string, string> param_got, disco::User UserLoggedIn);
     /*METODOS AUXILIARES*/
     
     string getArchiveUserTXT(int part_start_partition, string path);
-    disco::User checkUser(string user_txt, string user, string psw);
+    disco::User checkUser(string user_txt, string user, string psw, bool needPassword);
     disco::Group checkGroup(string user_txt, string nombre);
     void getContentByTypePointer(string *contenido, string tipo_apuntador, string path, disco::Superblock spb, int pos_block);
     void insertJournal(string contenido, char operacion, disco::Mount mount_temp, disco::Superblock spb);

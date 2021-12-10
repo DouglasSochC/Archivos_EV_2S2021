@@ -48,14 +48,15 @@ disco::User adm_ug::login(map<string, string> param_got, vector<disco::Mount> li
     }
     
     string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
-    disco::User response = checkUser(text, usr, pwd);
+    disco::User response = checkUser(text, usr, pwd, true);
     response.montura = actualMount;
 
-    if (response.id != -1){
-        cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " ¡Bienvenido! " << usr << " " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
-    }else{
-        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe un usuario con el username y contraseña ingresada " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+    if (!(response.usuario == usr && response.contrasenia == pwd)){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el usuario con el username y contraseña ingresada " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return disco::User();
     }
+
+    cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " ¡Bienvenido! " << usr << " " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
     return response;
 }
 
@@ -152,7 +153,6 @@ void adm_ug::mkgrp(map<string, string> param_got, disco::User UserLoggedIn){
     }else{
         cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya no hay mas espacio para poder ingresar el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
     }
-    
 }
 
 void adm_ug::rmgrp(map<string, string> param_got, disco::User UserLoggedIn){
@@ -187,6 +187,11 @@ void adm_ug::rmgrp(map<string, string> param_got, disco::User UserLoggedIn){
         return;
     }
     
+    if (name == "root"){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No se puede eliminar el grupo root " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
     //Creo una variable de tipo FILE
     FILE *file = fopen(path.c_str(), "rb+");
 
@@ -218,12 +223,183 @@ void adm_ug::rmgrp(map<string, string> param_got, disco::User UserLoggedIn){
 
     //Se ingresa un journal en el caso de que sea un sistema EXT3
     if (sp_user->s_filesystem_type == 3){
-        string registro = to_string(response.id)+","+"G"+","+response.nombre+";"+"0,"+"G"+","+response.nombre;
+        string registro = to_string(response.id)+","+response.nombre+";"+"0,"+response.nombre;
         insertJournal(registro, 'U', actualMount, *sp_user);
     }
 
     cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " Se eliminado correctamente el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
 
+}
+
+void adm_ug::mkusr(map<string, string> param_got, disco::User UserLoggedIn){
+    if (param_got.size() == 0){return;}
+
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string usr = param_got["-usr"].c_str();
+    string pwd = param_got["-pwd"].c_str();
+    string grp = param_got["-grp"].c_str();
+
+    /*Formateo de datos*/
+    usr = (usr.substr(0,1) == "\"") ? usr.substr(1, usr.size()-2): usr;
+    grp = (grp.substr(0,1) == "\"") ? grp.substr(1, grp.size()-2): grp;
+
+    /*Flujo del void*/
+    //Se verifica que halla una sesion activa
+    if (UserLoggedIn.id == -1){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No hay una sesion activa " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se obtiene la montura
+    disco::Mount actualMount = UserLoggedIn.montura;
+    string path = actualMount.path;
+    if (actualMount.status == '0'){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el id " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se verifica que sea usuario root
+    bool isRoot = (UserLoggedIn.usuario == "root" && UserLoggedIn.contrasenia == "123");
+    if (!isRoot){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Solo un usuario root puede realizar esta accion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Creo una variable de tipo FILE
+    FILE *file = fopen(path.c_str(), "rb+");
+
+    //Obtengo el super bloque
+    disco::Superblock *sp_user = new disco::Superblock();
+    fseek(file, actualMount.part_start, SEEK_SET);
+    fread(sp_user, csnt_ug.SIZE_SPB, 1, file);
+    if (sp_user->s_filesystem_type == 0)    {
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No se ha formateado esta particion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        fclose(file);
+        return;
+    }
+
+    //Se obtiene el inodo del user.txt
+    disco::Inode *inode_user = new disco::Inode();
+    fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
+    fread(inode_user, csnt_ug.SIZE_I, 1, file);
+    
+    string text = getArchiveUserTXT(actualMount.part_start, path);
+    disco::Group responseGroup = checkGroup(text, grp);
+    if (responseGroup.nombre != grp){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el grupo que desea asignar al usuario " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        fclose(file);
+        return;
+    }
+    disco::User responseUser = checkUser(text, usr, "", false);
+    if (responseUser.usuario == usr){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya existe el usuario que desea crear " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        fclose(file);
+        return;
+    }
+    //Se insertan los datos en el inodo
+    string registro = to_string(responseUser.id+1)+",U,"+grp+","+usr+","+pwd+"\n";
+
+    //Se almacena el registro para el journal, si es que es EXT3, antes de que sea modificado
+    string registro_journal = registro;
+
+    insertDatainInodeArchive(&registro, sp_user, inode_user, actualMount);    
+
+    //Se actualiza el superbloque debido a que pudo tener cambios mientras se ingresaba algun registro
+    fseek(file, actualMount.part_start, SEEK_SET);
+    fwrite(sp_user, csnt_ug.SIZE_SPB, 1, file);
+
+    //Se actualiza el inodo debido a que pudo tener cambios mientras se ingresaba algun registro
+    fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
+    fwrite(inode_user, csnt_ug.SIZE_I, 1, file);
+
+    //Se almacenan los cambios
+    fclose(file);
+
+    //Se ingresa un journal en el caso de que sea un sistema EXT3
+    if (sp_user->s_filesystem_type == 3){
+        insertJournal(registro_journal, 'A', actualMount, *sp_user);
+    }
+
+    if (registro.size() == 0){
+        cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " Se creado correctamente el usuario " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+    }else{
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Ya no hay mas espacio para poder ingresar el usuario " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+    }
+}
+
+void adm_ug::rmusr(map<string, string> param_got, disco::User UserLoggedIn){
+    if (param_got.size() == 0){return;}
+
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"].c_str();
+    string usr = param_got["-usr"].c_str();
+
+    /*Formateo de datos*/
+    usr = (usr.substr(0,1) == "\"") ? usr.substr(1, usr.size()-2): usr;
+
+    /*Flujo del void*/
+    //Se verifica que halla una sesion activa
+    if (UserLoggedIn.id == -1){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No hay una sesion activa " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se obtiene la montura
+    disco::Mount actualMount = UserLoggedIn.montura;
+    string path = actualMount.path;
+    if (actualMount.status == '0'){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el id " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se verifica que sea usuario root
+    bool isRoot = (UserLoggedIn.usuario == "root" && UserLoggedIn.contrasenia == "123");
+    if (!isRoot){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " Solo un usuario root puede realizar esta accion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+    
+    if (usr == "root"){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No se puede eliminar el usuario root " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Creo una variable de tipo FILE
+    FILE *file = fopen(path.c_str(), "rb+");
+
+    //Obtengo el super bloque
+    disco::Superblock *sp_user = new disco::Superblock();
+    fseek(file, actualMount.part_start, SEEK_SET);
+    fread(sp_user, csnt_ug.SIZE_SPB, 1, file);
+    if (sp_user->s_filesystem_type == 0)    {
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No se ha formateado esta particion " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+
+    //Se obtiene el inodo del user.txt
+    disco::Inode *inode_user = new disco::Inode();
+    fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
+    fread(inode_user, csnt_ug.SIZE_I, 1, file);
+    
+    string text = getArchiveUserTXT(actualMount.part_start, path);
+    disco::User response = checkUser(text, usr, "", false);
+    if (response.usuario != usr){
+        cout << csnt_ug.RED << "ERROR:" << csnt_ug.NC << " No existe el usuario que desea eliminar " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
+        return;
+    }
+    int posicion_registro_encontrado = response.posicion_registro;
+    changeStatusRow(sp_user, inode_user, actualMount, &posicion_registro_encontrado);
+
+    //Se almacenan los cambios
+    fclose(file);
+
+    //Se ingresa un journal en el caso de que sea un sistema EXT3
+    if (sp_user->s_filesystem_type == 3){
+        string registro = to_string(response.id)+","+response.usuario+";"+"0,"+response.usuario;
+        insertJournal(registro, 'U', actualMount, *sp_user);
+    }
+    cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " Se eliminado correctamente el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
 }
 
 string adm_ug::getArchiveUserTXT(int part_start_partition, string path){
@@ -515,7 +691,7 @@ void adm_ug::setContentByTypePointer(string tipo_puntero, int pos_block, string 
     fclose(file);
 }
 
-disco::User adm_ug::checkUser(string user_txt, string user, string psw){
+disco::User adm_ug::checkUser(string user_txt, string user, string psw, bool needPassword){
     
     disco::User response;
     vector<string> temp;
@@ -543,7 +719,7 @@ disco::User adm_ug::checkUser(string user_txt, string user, string psw){
             }
 
             if (temp[1] == "U"){
-                if (temp[3] == user && temp[4] == psw){
+                if ((temp[3] == user && temp[4] == psw && atoi(temp[0].c_str()) > 0) || (temp[3] == user && needPassword == false && atoi(temp[0].c_str()) > 0)){
                     response.usuario = user;
                     response.contrasenia = psw;
                     response.grupo = temp[2];
@@ -552,7 +728,15 @@ disco::User adm_ug::checkUser(string user_txt, string user, string psw){
                     response.posicion_registro = actual;
                     response.tamanio_registro = tamanio;
                     break;
-                }                
+                }else if(atoi(temp[0].c_str()) >= response.id){
+                    response.usuario = "";
+                    response.contrasenia = "";
+                    response.grupo = temp[2];
+                    response.id = atoi(temp[0].c_str());
+                    response.tipo = temp[1][0];
+                    response.posicion_registro = actual;
+                    response.tamanio_registro = tamanio;
+                }
             }
             actual = i + 1;
             tamanio = 0;
