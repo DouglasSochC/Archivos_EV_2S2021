@@ -316,7 +316,7 @@ map<string, string> parameters::param_mkdir(vector<string> tokens){
         if (return_params.size() == 2){
             string llave = util_prmts.toLowerString(return_params[0]);
             string valor = return_params[1];
-            if (!(llave == "-comentario" || llave == "-id" || llave == "-path" || llave == "-p")){
+            if (!(llave == "-comentario" || llave == "-path" || llave == "-p")){
                 cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " no es valido por lo tanto no se tomara en cuenta" << endl;
             }else{
                 if (!map_u[llave].empty()){
@@ -338,14 +338,13 @@ map<string, string> parameters::param_mkdir(vector<string> tokens){
     } else {
         var_p = map_u["-p"];        
     }
-    string id = map_u["-id"];
-    if (!id.empty() && !path.empty()){
+    if (!path.empty()){
         if(!var_p.empty()){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " Al parametro -P no se le debe asignar un valor " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
         }
     }else{
-        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-id, -path) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-path) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
         map_u.clear();
     }
     return map_u;

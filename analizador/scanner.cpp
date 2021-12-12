@@ -112,8 +112,8 @@ void scanner::exec_command(vector<string> tokens){
             map<string, string> param_got = prmts_scnr.param_cat(tokens);
             //scrp_UsuarioLog = admcap_scnr.mkdir(scrp_UsuarioLog);
         }else if(comando == "mkdir"){
-            //map<string, string> param_got = prmts_scnr.param_mkdir(tokens);
-            //admcap_scnr.mkdir(param_got, admdcs_scnr.getListMount(), scrp_UsuarioLog);
+            map<string, string> param_got = prmts_scnr.param_mkdir(tokens);
+            admcap_scnr.mkdir(param_got, scrp_UsuarioLog);
         }else if(comando == "rep"){
             map<string, string> param_got = prmts_scnr.param_rep(tokens);
             if (param_got.size() > 0){

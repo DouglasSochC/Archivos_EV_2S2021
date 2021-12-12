@@ -901,50 +901,37 @@ void reportes::drawInode(disco::Inode inodo, string path, string estructura_inic
     if (inodo.i_type == '0'){
         FILE *file_inode = fopen(path.c_str(), "rb");
         for (int i = 0; i < listado_punteros.size(); i++){
-            if (listado_punteros[i].num_puntero == 0){
-                int posicion_bloque = listado_punteros[i].posicion;
-                //Indica que el primer apuntador en el vector 'listado_punteros' es una estructura FolderBlock
+            int posicion_bloque = listado_punteros[i].posicion;
+            //Apuntadores 1 al 12 de un inodo de tipo carpeta en donde lo que se va a leer son bloques de tipo folder
+            if (listado_punteros[i].num_puntero >= 0 && listado_punteros[i].num_puntero < 12){
                 disco::Folderblock folder;
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_FB), SEEK_SET);
                 fread(&folder, csnt_rp.SIZE_FB, 1, file_inode);
-                //Se elimina la posicion inicial
-                listado_punteros.erase(listado_punteros.begin());
                 //Dibuja carpeta
                 drawFolderBlock(folder, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
-            }else{
-                //Apuntadores 2 al 15 de un inodo de tipo carpeta en donde lo que se va a leer son inodos o punteros
-                int posicion_bloque = listado_punteros[i].posicion;
-                int posicion_inodo = listado_punteros[i].posicion;
-                if (listado_punteros[i].num_puntero >= 1 && listado_punteros[i].num_puntero < 12){
-                    //Se leen directamente estructuras de tipo inodo                    
-                    disco::Inode nuevo_inodo;
-                    fseek(file_inode, spb->s_block_start + (posicion_inodo * csnt_rp.SIZE_I), SEEK_SET);
-                    fread(&nuevo_inodo, csnt_rp.SIZE_I, 1, file_inode);
-                    //Dibuja el inodo
-                    drawInode(nuevo_inodo, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
-                }else if(listado_punteros[i].num_puntero == 12){
-                    //Se lee el apuntador 13
-                    disco::Pointerblock pointer;//En el metodo del apuntador hay que indicar que tipo es
-                    fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
-                    fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
-                    //Dibuja el apuntador
-                    drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BSI", '0', contador_inodo, contador_bloque, draw, relations, spb);
-                }else if(listado_punteros[i].num_puntero == 13){
-                    //Se lee el apuntador 14
-                    disco::Pointerblock pointer;
-                    fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
-                    fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
-                    //Dibuja el apuntador
-                    drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BDI", '0', contador_inodo, contador_bloque, draw, relations, spb);
-                }else if(listado_punteros[i].num_puntero == 14){
-                    //Se lee el apuntador 15
-                    disco::Pointerblock pointer;
-                    fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
-                    fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
-                    //Dibuja el apuntador
-                    drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BTI", '0', contador_inodo, contador_bloque, draw, relations, spb);
-                }
+            }else if(listado_punteros[i].num_puntero == 12){
+                //Se lee el apuntador 13
+                disco::Pointerblock pointer;
+                fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
+                fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
+                //Dibuja el apuntador
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BSI", '0', contador_inodo, contador_bloque, draw, relations, spb);
+            }else if(listado_punteros[i].num_puntero == 13){
+                //Se lee el apuntador 14
+                disco::Pointerblock pointer;
+                fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
+                fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
+                //Dibuja el apuntador
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BDI", '0', contador_inodo, contador_bloque, draw, relations, spb);
+            }else if(listado_punteros[i].num_puntero == 14){
+                //Se lee el apuntador 15
+                disco::Pointerblock pointer;
+                fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
+                fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
+                //Dibuja el apuntador
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BTI", '0', contador_inodo, contador_bloque, draw, relations, spb);
             }
+            
         }
         fclose(file_inode);
     }else if(inodo.i_type == '1'){
@@ -1106,13 +1093,14 @@ void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, stri
     FILE *file_pointer = fopen(path.c_str(), "rb");
     if (tipo_apuntador == "BSI"){
         if (tipo_inodo == '0'){
-            //El tipo_inodo = 0 solo me indica que a lo que se apunta es a un inodo
+            //El tipo_inodo = 0 solo me indica que a lo que se apunta es a un bloque de tipo folder
             for (int i = 0; i < listado_punteros.size(); i++){
-                int posicion_inode = listado_punteros[i].posicion;
-                disco::Inode inodo;
-                fseek(file_pointer, spb->s_inode_start + (posicion_inode * csnt_rp.SIZE_I), SEEK_SET);
-                fread(&inodo, csnt_rp.SIZE_I, 1, file_pointer);
-                drawInode(inodo, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
+                int posicion_bloque = listado_punteros[i].posicion;
+                disco::Folderblock folder;
+                fseek(file_pointer, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_FB), SEEK_SET);
+                fread(&folder, csnt_rp.SIZE_FB, 1, file_pointer);
+                //Dibuja carpeta
+                drawFolderBlock(folder, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
             }
         }else if(tipo_inodo == '1'){
             //El tipo_inodo = 1 solo me indica que a lo que se apunta es a un archivo

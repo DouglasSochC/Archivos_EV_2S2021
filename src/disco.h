@@ -55,7 +55,7 @@ public:
     } Inode;
 
     typedef struct {
-        char b_name[12]; //Nombre de la carpeta o archivo
+        char b_name[12] = { '\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0','\0' };
         int b_inodo = -1; //Apuntador hacia un inodo asociado al archivo o carpeta
     } Content;
     
@@ -127,7 +127,7 @@ public:
 
     typedef struct {
         int id = -1; // -1 = Sin uso; 0 = Eliminado; >0 = Id activo
-        char tipo; // G = Grupo; U = Usuario
+        char tipo; // G = Grupo; U = Usuario        
         string grupo = ""; // Nombre del grupo al que pertence
         string usuario = ""; // Nombre del usuario
         string contrasenia = ""; // Contrasenia del usuario

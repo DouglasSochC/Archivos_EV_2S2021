@@ -208,5 +208,5 @@ Este reporte mostrará la información del bit map de inodos, mostará todos los
 ##### 1.6 Reporte BM_BLOCK
 Este reporte mostrará la información del bit map de bloques, mostará todos los bits, libres o utilizados. Este reporte se generara en un archivo de texto que mostrara 20 registros por línea.
 
-##### 1.7 Reporte BM_BLOCK
+##### 1.7 Reporte TREE
 Este reporte genera el árbol de todo el sistema EXT2/EXT3. Se mostrará toda la información de los inodos o bloques. No se pondrán los apuntadores que no son utilizados.
