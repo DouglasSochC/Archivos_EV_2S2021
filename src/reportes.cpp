@@ -908,28 +908,28 @@ void reportes::drawInode(disco::Inode inodo, string path, string estructura_inic
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_FB), SEEK_SET);
                 fread(&folder, csnt_rp.SIZE_FB, 1, file_inode);
                 //Dibuja carpeta
-                drawFolderBlock(folder, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
+                drawFolderBlock(folder, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, contador_inodo, contador_bloque, draw, relations, spb);
             }else if(listado_punteros[i].num_puntero == 12){
                 //Se lee el apuntador 13
                 disco::Pointerblock pointer;
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
                 fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
                 //Dibuja el apuntador
-                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BSI", '0', contador_inodo, contador_bloque, draw, relations, spb);
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BSI", '0', contador_inodo, contador_bloque, draw, relations, spb);
             }else if(listado_punteros[i].num_puntero == 13){
                 //Se lee el apuntador 14
                 disco::Pointerblock pointer;
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
                 fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
                 //Dibuja el apuntador
-                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BDI", '0', contador_inodo, contador_bloque, draw, relations, spb);
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BDI", '0', contador_inodo, contador_bloque, draw, relations, spb);
             }else if(listado_punteros[i].num_puntero == 14){
                 //Se lee el apuntador 15
                 disco::Pointerblock pointer;
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
                 fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
                 //Dibuja el apuntador
-                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BTI", '0', contador_inodo, contador_bloque, draw, relations, spb);
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BTI", '0', contador_inodo, contador_bloque, draw, relations, spb);
             }
             
         }
@@ -944,35 +944,35 @@ void reportes::drawInode(disco::Inode inodo, string path, string estructura_inic
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_AB), SEEK_SET);
                 fread(&archive, csnt_rp.SIZE_AB, 1, file_inode);
                 //Dibuja el archivo
-                drawArchiveBlock(archive, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);          
+                drawArchiveBlock(archive, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, contador_inodo, contador_bloque, draw, relations, spb);          
             }else if(listado_punteros[i].num_puntero == 12){
                 //Se lee el apuntador 13
                 disco::Pointerblock pointer;//En el metodo del apuntador hay que indicar que tipo es
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
                 fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
                 //Dibuja el apuntador
-                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BSI", '1', contador_inodo, contador_bloque, draw, relations, spb);
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BSI", '1', contador_inodo, contador_bloque, draw, relations, spb);
             }else if(listado_punteros[i].num_puntero == 13){
                 //Se lee el apuntador 14
                 disco::Pointerblock pointer;
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
                 fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
                 //Dibuja el apuntador
-                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BDI", '1', contador_inodo, contador_bloque, draw, relations, spb);
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BDI", '1', contador_inodo, contador_bloque, draw, relations, spb);
             }else if(listado_punteros[i].num_puntero == 14){
                 //Se lee el apuntador 15
                 disco::Pointerblock pointer;
                 fseek(file_inode, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
                 fread(&pointer, csnt_rp.SIZE_PB, 1, file_inode);
                 //Dibuja el apuntador
-                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BTI", '1', contador_inodo, contador_bloque, draw, relations, spb);
+                drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BTI", '1', contador_inodo, contador_bloque, draw, relations, spb);
             }
         }
         fclose(file_inode);
     }
 }
 
-void reportes::drawFolderBlock(disco::Folderblock carpeta, string path, string estructura_inicial, bool isInodeInit, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
+void reportes::drawFolderBlock(disco::Folderblock carpeta, string path, string estructura_inicial, bool isInodeInit, int encabezado_bloque, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
     vector<Punteros_aux> listado_punteros;
     int cantidad_punteros_utilizados = 0;
     for (int i = 0; i < 4; i++){
@@ -986,7 +986,7 @@ void reportes::drawFolderBlock(disco::Folderblock carpeta, string path, string e
     *draw += nombre_estructura+" [label=<\n"
     "<TABLE border='0' cellborder='1' cellspacing='0'>\n"
     "<TR>\n"
-        "<TD COLSPAN='3' BGCOLOR = '"+ csnt_rp.COLOR_FOLDER +"'>BLOQUE " + to_string(*contador_bloque) + "</TD>\n"
+        "<TD COLSPAN='3' BGCOLOR = '"+ csnt_rp.COLOR_FOLDER +"'>BLOQUE " + to_string(encabezado_bloque) + "</TD>\n"
     "</TR>\n";
     if (!isInodeInit){
         *relations += estructura_inicial + "->" + nombre_estructura + "\n";
@@ -1028,13 +1028,13 @@ void reportes::drawFolderBlock(disco::Folderblock carpeta, string path, string e
     fclose(file_folder);
 }
 
-void reportes::drawArchiveBlock(disco::Archiveblock archivo, string path, string estructura_inicial, bool isInodeInit, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
+void reportes::drawArchiveBlock(disco::Archiveblock archivo, string path, string estructura_inicial, bool isInodeInit, int encabezado_bloque, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
 
     string nombre_estructura = "bloque"+to_string(*contador_bloque);
     *draw += nombre_estructura+" [label=<\n"
     "<TABLE border='0' cellborder='1' cellspacing='0'>\n"
     "<TR>\n"
-        "<TD COLSPAN='2' BGCOLOR = '"+ csnt_rp.COLOR_ARCHIVE +"'>BLOQUE " + to_string(*contador_bloque) + "</TD>\n"
+        "<TD COLSPAN='2' BGCOLOR = '"+ csnt_rp.COLOR_ARCHIVE +"'>BLOQUE " + to_string(encabezado_bloque) + "</TD>\n"
     "</TR>\n";
     if (!isInodeInit){
         *relations += estructura_inicial + "->" + nombre_estructura + "\n";
@@ -1049,7 +1049,7 @@ void reportes::drawArchiveBlock(disco::Archiveblock archivo, string path, string
 
 }
 
-void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, string estructura_inicial, bool isInodeInit, string tipo_apuntador, char tipo_inodo, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
+void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, string estructura_inicial, bool isInodeInit, int encabezado_bloque, string tipo_apuntador, char tipo_inodo, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
     vector<Punteros_aux> listado_punteros;
     int cantidad_punteros_utilizados = 0;
     for (int i = 0; i < 15; i++){
@@ -1061,7 +1061,7 @@ void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, stri
     *draw += nombre_estructura+" [label=<\n"
     "<TABLE border='0' cellborder='1' cellspacing='0'>\n"
     "<TR>\n"
-        "<TD COLSPAN='3' BGCOLOR = '"+ csnt_rp.COLOR_POINTER +"'>BLOQUE " + to_string(*contador_bloque) + "</TD>\n"
+        "<TD COLSPAN='3' BGCOLOR = '"+ csnt_rp.COLOR_POINTER +"'>BLOQUE " + to_string(encabezado_bloque) + "</TD>\n"
     "</TR>\n";
     if (!isInodeInit){
         *relations += estructura_inicial + "->" + nombre_estructura + "\n";
@@ -1098,7 +1098,7 @@ void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, stri
                 fseek(file_pointer, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_FB), SEEK_SET);
                 fread(&folder, csnt_rp.SIZE_FB, 1, file_pointer);
                 //Dibuja carpeta
-                drawFolderBlock(folder, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
+                drawFolderBlock(folder, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, contador_inodo, contador_bloque, draw, relations, spb);
             }
         }else if(tipo_inodo == '1'){
             //El tipo_inodo = 1 solo me indica que a lo que se apunta es a un archivo
@@ -1108,7 +1108,7 @@ void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, stri
                 fseek(file_pointer, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_AB), SEEK_SET);
                 fread(&archive, csnt_rp.SIZE_AB, 1, file_pointer);
                 //Dibuja el archivo
-                drawArchiveBlock(archive, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);                
+                drawArchiveBlock(archive, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, contador_inodo, contador_bloque, draw, relations, spb);                
             }
         }
     }else if(tipo_apuntador == "BDI"){
@@ -1118,7 +1118,7 @@ void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, stri
             fseek(file_pointer, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
             fread(&pointer, csnt_rp.SIZE_PB, 1, file_pointer);
             //Dibuja los apuntadores
-            drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BSI", tipo_inodo, contador_inodo, contador_bloque, draw, relations, spb);
+            drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BSI", tipo_inodo, contador_inodo, contador_bloque, draw, relations, spb);
         }
     }else if(tipo_apuntador == "BTI"){
         for (int i = 0; i < listado_punteros.size(); i++){
@@ -1127,7 +1127,7 @@ void reportes::drawPointerBlock(disco::Pointerblock apuntador, string path, stri
             fseek(file_pointer, spb->s_block_start + (posicion_bloque * csnt_rp.SIZE_PB), SEEK_SET);
             fread(&pointer, csnt_rp.SIZE_PB, 1, file_pointer);
             //Dibuja los apuntadores
-            drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, "BDI", tipo_inodo, contador_inodo, contador_bloque, draw, relations, spb);
+            drawPointerBlock(pointer, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_bloque, "BDI", tipo_inodo, contador_inodo, contador_bloque, draw, relations, spb);
         }
     }
     fclose(file_pointer);

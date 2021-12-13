@@ -43,8 +43,8 @@ public:
 
     const string COLOR_INODE = "#84B1F2";
     const string COLOR_FOLDER = "#F2EA84";
-    const string COLOR_ARCHIVE = "#F284ED";
-    const string COLOR_POINTER = "#38F50E";    
+    const string COLOR_ARCHIVE = "#99FBD7";
+    const string COLOR_POINTER = "#FFB1D2";    
 
     //USUARIOS Y GRUPOS INICIALES
 
