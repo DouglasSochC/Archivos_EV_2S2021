@@ -548,7 +548,7 @@ void reportes::journaling(map<string, string> param_got, vector<disco::Mount> li
             "general [label = <\n"
             "<table>\n"
             "<tr><td COLSPAN = '8' BGCOLOR=\"#BFBFBF\"><font color=\"black\">JOURNALING - " + name_aux + " en " + path_aux + "</font></td></tr>\n"
-            "<tr><td BGCOLOR=\"#E0FFFF\">Id</td><td BGCOLOR=\"#E0FFFF\">Operacion</td><td BGCOLOR=\"#E0FFFF\" >Tipo</td><td BGCOLOR=\"#E0FFFF\">Nombre</td><td BGCOLOR=\"#E0FFFF\">Contenido</td><td BGCOLOR=\"#E0FFFF\">Fecha Transaccion</td><td BGCOLOR=\"#E0FFFF\">Propietario</td><td BGCOLOR=\"#E0FFFF\">Permisos</td></tr>\n";
+            "<tr><td BGCOLOR=\"#E0FFFF\">Id</td><td BGCOLOR=\"#E0FFFF\">Operacion</td><td BGCOLOR=\"#E0FFFF\" >Tipo</td><td BGCOLOR=\"#E0FFFF\">Nombre</td><td BGCOLOR=\"#E0FFFF\">Argumento</td><td BGCOLOR=\"#E0FFFF\">Fecha Transaccion</td><td BGCOLOR=\"#E0FFFF\">Propietario</td><td BGCOLOR=\"#E0FFFF\">Permisos</td></tr>\n";
     for (int i = 0; i < listJournal.size(); i++){
         tm = localtime(&listJournal[i].date);
         strftime(fecha_transaccion, 20, "%Y/%m/%d %H:%M:%S", tm);
@@ -1021,8 +1021,6 @@ void reportes::drawFolderBlock(disco::Folderblock carpeta, string path, string e
             disco::Inode tempInodo;
             fseek(file_folder, spb->s_inode_start + (posicion_inodo * csnt_rp.SIZE_I), SEEK_SET);
             fread(&tempInodo, csnt_rp.SIZE_I, 1, file_folder);
-            //Se elimina la posicion inicial
-            listado_punteros.erase(listado_punteros.begin());
             //Dibuja Inodo
             drawInode(tempInodo, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
         }

@@ -145,7 +145,7 @@ void adm_ug::mkgrp(map<string, string> param_got, disco::User UserLoggedIn){
 
     //Se ingresa un journal en el caso de que sea un sistema EXT3
     if (sp_user->s_filesystem_type == 3){
-        insertJournal(registro_journal, 'A', actualMount, *sp_user);
+        insertJournal(registro_journal, 'A', 0, actualMount, *sp_user);
     }
 
     if (registro.size() == 0){
@@ -223,8 +223,8 @@ void adm_ug::rmgrp(map<string, string> param_got, disco::User UserLoggedIn){
 
     //Se ingresa un journal en el caso de que sea un sistema EXT3
     if (sp_user->s_filesystem_type == 3){
-        string registro = to_string(response.id)+","+response.nombre+";"+"0,"+response.nombre;
-        insertJournal(registro, 'U', actualMount, *sp_user);
+        string registro = to_string(response.id)+","+response.nombre+"|"+"0,"+response.nombre;
+        insertJournal(registro, 'U', 0, actualMount, *sp_user);
     }
 
     cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " Se eliminado correctamente el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
@@ -318,7 +318,7 @@ void adm_ug::mkusr(map<string, string> param_got, disco::User UserLoggedIn){
 
     //Se ingresa un journal en el caso de que sea un sistema EXT3
     if (sp_user->s_filesystem_type == 3){
-        insertJournal(registro_journal, 'A', actualMount, *sp_user);
+        insertJournal(registro_journal, 'A', 0, actualMount, *sp_user);
     }
 
     if (registro.size() == 0){
@@ -396,8 +396,8 @@ void adm_ug::rmusr(map<string, string> param_got, disco::User UserLoggedIn){
 
     //Se ingresa un journal en el caso de que sea un sistema EXT3
     if (sp_user->s_filesystem_type == 3){
-        string registro = to_string(response.id)+","+response.usuario+";"+"0,"+response.usuario;
-        insertJournal(registro, 'U', actualMount, *sp_user);
+        string registro = to_string(response.id)+","+response.usuario+"|"+"0,"+response.usuario;
+        insertJournal(registro, 'U', 0, actualMount, *sp_user);
     }
     cout << csnt_ug.GREEN << "RESPUESTA:" << csnt_ug.NC << " Se eliminado correctamente el grupo " << csnt_ug.BLUE << comentario << csnt_ug.NC << endl;
 }
@@ -796,7 +796,7 @@ disco::Group adm_ug::checkGroup(string user_txt, string nombre){
     return response;
 }
 
-void adm_ug::insertJournal(string contenido, char operacion, disco::Mount mount_temp, disco::Superblock spb){
+void adm_ug::insertJournal(string contenido, char operacion, int permiso, disco::Mount mount_temp, disco::Superblock spb){
 
     //Creo una variable de tipo FILE
     FILE *file = fopen(mount_temp.path.c_str(), "rb+");
@@ -830,7 +830,7 @@ void adm_ug::insertJournal(string contenido, char operacion, disco::Mount mount_
     journal->content = contenido;
     journal->date = time(nullptr);
     strcpy(journal->propietario, "root");
-    journal->permiso = 664;
+    journal->permiso = permiso;
     
     fwrite(journal, csnt_ug.SIZE_J, 1, file);
     fclose(file);

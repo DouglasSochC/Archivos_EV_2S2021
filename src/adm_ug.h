@@ -25,7 +25,7 @@ public:
     disco::User checkUser(string user_txt, string user, string psw, bool needPassword);
     disco::Group checkGroup(string user_txt, string nombre);
     void getContentByTypePointer(string *contenido, string tipo_apuntador, string path, disco::Superblock spb, int pos_block);
-    void insertJournal(string contenido, char operacion, disco::Mount mount_temp, disco::Superblock spb);
+    void insertJournal(string contenido, char operacion, int permiso, disco::Mount mount_temp, disco::Superblock spb);
     
     /*
     Este inserta registros en un inodo de tipo archivo

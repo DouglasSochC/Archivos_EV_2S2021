@@ -967,7 +967,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     //strcpy(journaling2.content, data.c_str());
     journaling2->date = time(nullptr);
     strcpy(journaling2->propietario, "root");
-    journaling2->permiso = 664;
+    journaling2->permiso = 0;
     //Se almacena el journaling
     fseek(save_structs, journaling_start + csnt_admdcs.SIZE_J, SEEK_SET);
     fwrite(journaling2, csnt_admdcs.SIZE_J, 1, save_structs);
