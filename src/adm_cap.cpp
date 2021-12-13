@@ -295,7 +295,50 @@ void adm_cap::editInodeFolder(string comentario, disco::Inode inodo_a_editar, in
 
     //Apuntador 14 - Se apunta a una estructura de apuntadores
     if (inodo_a_editar.i_block[13] != -1 && !(*encontro_puntero_disponible)){
-        //############################################################################
+        /*
+            Como minimo debe de haber espacio disponible: 1 Inodo y 3 Bloques
+            Bloque1 = Es el nuevo bloque de tipo apuntador en donde su primer apuntador apunta al bloque de tipo carpeta
+            Bloque2 = Es el nuevo bloque de tipo carpeta en donde su primer apuntador apunta al Inodo1
+            Inodo1 = Es el nuevo inodo de tipo carpeta a crear
+            Bloque3 = Es el bloque de tipo carpeta que tendra el inodo 1 en su primer apuntador         
+        */
+        if (spb->s_free_blocks_count <= 2 && spb->s_free_inodes_count <= 0){
+            cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        }else{
+            editBlockPointer("BDI", comentario, inodo_a_editar.i_block[13], pos_nuevo_inodo_a_insertar, nombre_inodo_a_insertar, path, encontro_puntero_disponible, spb, pos_block);
+        }
+    }else if(inodo_a_editar.i_block[13] == -1 && !(*encontro_puntero_disponible)){
+            /*
+            Como minimo debe de haber espacio disponible: 1 Inodo y 4 Bloques
+            Bloque1 = Es el nuevo bloque de tipo apuntador en donde su primer apuntador apunta al Bloque2
+            Bloque 2 = Es el nuevo bloque de tipo apuntador en donde su primer apuntador apunta al Bloque3
+            Bloque3 = Es el nuevo bloque de tipo carpeta en donde su primer apuntador apunta al Inodo1
+            Inodo1 = Es el nuevo inodo de tipo carpeta a crear
+            Bloque4 = Es el bloque de tipo carpeta que tendra el inodo 1 en su primer apuntador                
+        */
+        if (spb->s_free_blocks_count <= 3 && spb->s_free_inodes_count <= 0){
+            cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        }else{
+            *encontro_puntero_disponible = true;
+            FILE *file = fopen(path.c_str(), "rb+");
+            //Se crea el nuevo bloque de apuntadores
+            disco::Pointerblock nuevo_bloque_puntero;
+            //Se escribe el bloque de apuntador
+            fseek(file, spb->s_block_start + ((*pos_block) * csnt_cap.SIZE_PB), SEEK_SET);
+            fwrite(&nuevo_bloque_puntero, csnt_cap.SIZE_PB, 1, file);
+            //Se almacena el bloque de apuntadores
+            fclose(file);
+            //Se asigna la posicion del bloque de punteros al puntero 14 del inodo
+            inodo_a_editar.i_block[13] = (*pos_block);
+            int pos_bloque_a_editar = (*pos_block);
+            //Se setea un 1 en ese espacio disponible para confirmar su utilizacion en esa posicion
+            setPositionBMBlock(*pos_block, path, *spb);
+            //Se asigna una nueva posicion a la posicion del bloque
+            *pos_block = getPositionBMBlock(*spb, path);
+            spb->s_free_blocks_count -= 1;
+            //Lo que se debe de hacer a continuacion es editar el bloque
+            editBlockPointer("BDI", comentario, pos_bloque_a_editar, pos_nuevo_inodo_a_insertar, nombre_inodo_a_insertar, path, encontro_puntero_disponible, spb, pos_block);            
+        }     
     }
 
     //Apuntador 15 - Se apunta a una estructura de apuntadores
@@ -361,9 +404,65 @@ void adm_cap::editBlockPointer(string tipo_bloque, string comentario, int pos_bl
         fwrite(&bloque_puntero, csnt_cap.SIZE_PB, 1, file);
         fclose(file);
     }
-    //
     else if(tipo_bloque == "BDI"){
-
+        FILE *file = fopen(path.c_str(), "rb+");
+        //Se lee el bloque de apuntadores
+        disco::Pointerblock bloque_puntero;
+        fseek(file, spb->s_block_start + (pos_bloque_a_editar * csnt_cap.SIZE_PB), SEEK_SET);
+        fread(&bloque_puntero, csnt_cap.SIZE_PB, 1, file);
+        
+        for (int i = 0; i < 15; i++){
+            if (bloque_puntero.b_pointers[i] != -1 && !puntero_disponible){
+                ////PARA TEST DE LOS DEMAS APUNTADORES ES NECESARIO COMENTAR ESTE BLOQUE DE CODIGO////
+                FILE *file_lectura = fopen(path.c_str(), "rb+");
+                //Se crea el nuevo bloque de apuntadores
+                disco::Pointerblock bloque_lectura;
+                //Se posiciona en donde se ubica
+                fseek(file_lectura, spb->s_block_start + (bloque_puntero.b_pointers[i] * csnt_cap.SIZE_PB), SEEK_SET);
+                //Se lee el bloque de apuntador
+                fread(&bloque_lectura, csnt_cap.SIZE_PB, 1, file_lectura);
+                fclose(file_lectura);
+                bool hayEspacio = false;
+                for (int i = 0; i < 15; i++){
+                    if (bloque_lectura.b_pointers[i] == -1){
+                        hayEspacio = true;
+                        break;
+                    }                    
+                }
+                
+                if (hayEspacio){
+                    *encontro_puntero_disponible = true;
+                    puntero_disponible = true;
+                    editBlockPointer("BSI", comentario, bloque_puntero.b_pointers[i], pos_nuevo_inodo_a_insertar, nombre_inodo_a_insertar, path, encontro_puntero_disponible, spb, pos_block);
+                }
+            }else if(bloque_puntero.b_pointers[i] == -1 && !puntero_disponible){
+                *encontro_puntero_disponible = true;
+                puntero_disponible = true;
+                FILE *file_puntero = fopen(path.c_str(), "rb+");
+                //Se crea el nuevo bloque de apuntadores
+                disco::Pointerblock nuevo_bloque_puntero;
+                //Se posiciona en el lugar de guardado
+                fseek(file_puntero, spb->s_block_start + ((*pos_block) * csnt_cap.SIZE_PB), SEEK_SET);
+                //Se escribe el bloque de apuntador
+                fwrite(&nuevo_bloque_puntero, csnt_cap.SIZE_PB, 1, file_puntero);
+                fclose(file_puntero);
+                //Se asigna la posicion del bloque de punteros
+                bloque_puntero.b_pointers[i] = (*pos_block);
+                int pos_bloque_a_editar = (*pos_block);
+                //Se setea un 1 en ese espacio disponible para confirmar su utilizacion en esa posicion
+                setPositionBMBlock(*pos_block, path, *spb);
+                //Se asigna una nueva posicion a la posicion del bloque
+                *pos_block = getPositionBMBlock(*spb, path);
+                spb->s_free_blocks_count -= 1;
+                //Lo que se debe de hacer a continuacion es editar el bloque
+                editBlockPointer("BSI", comentario, pos_bloque_a_editar, pos_nuevo_inodo_a_insertar, nombre_inodo_a_insertar, path, encontro_puntero_disponible, spb, pos_block);
+            }
+        }   
+        
+        //Se almacena el bloque de apuntadores
+        fseek(file, spb->s_block_start + (pos_bloque_a_editar * csnt_cap.SIZE_PB), SEEK_SET);
+        fwrite(&bloque_puntero, csnt_cap.SIZE_PB, 1, file);
+        fclose(file);
     }
     //
     else if(tipo_bloque == "BTI"){
