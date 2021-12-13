@@ -14,14 +14,26 @@ public:
     void mkdir(map<string, string> param_got, disco::User UserLoggedIn);
     void cat(map<string, string> param_got, disco::Mount partitionMount, disco::User UserLoggedIn);
     
-    //FALTA ANALIZAR LOS APUNTADORES INDIRECTOS
+    /*
+        Este metodo se encarga de buscar y encontrar un path dentro de un inodo, sin embargo el path a 
+        buscar debe de venir en forma de lista, conforme va hallando el nombre de la carpeta o archivo, 
+        este se va eliminado del vector del path para no tomarlo en cuenta posteriormente.
+        Nota: Este solo puede buscar en los primeros 12 apuntadores de un inodo
+    */
     void searchInode(string path, int *pos_padre, int *pos_inodo, disco::Superblock *spb, vector<string> *listado_path);
     /*
         Este metodo se encarga de buscar un espacio libre entre sus 15 apuntadores y asi pueda
         insertar un bloque de tipo carpeta y a este nuevo bloque de tipo carpeta se le asigna en su
-        primer apuntador la posicion en la que se encuentra el nuevo inodo a ingresar
+        primer apuntador la posicion en la que se encuentra el nuevo inodo a ingresar.
+        Nota: Este solo puede editar los primeros 12 apuntadores del inodo
     */
-    void editInodeFolder(disco::Inode inodo_a_editar, int pos_inodo_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block);
+    void editInodeFolder(string comentario, disco::Inode inodo_a_editar, int pos_inodo_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block);
+    /*
+        Este metodo se encarga de buscar el primer espacio libre entre los 15 apuntadores de un bloque de
+        apuntadores, dependiendo de que tipo de apuntador sea, crea un bloque de carpetas o un bloque
+        de apuntadores y se le asigna al bloque nuevo creado
+    */
+    void editBlockPointer(string tipo_bloque, string comentario, int pos_bloque_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block);
     /*
         Este metodo se encarga de crear una nueva carpeta con este procedimiento:
         1. Crea y almacena un bloque de tipo carpeta en el cual sus primeros el apuntador 1 

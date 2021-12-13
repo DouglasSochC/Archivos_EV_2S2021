@@ -164,8 +164,7 @@ Este comando es similar a mkfile, pero no crea archivos, sino carpetas. El propi
 
 | Parámetro | Categoría   | Descripción                                                                                     |
 |-----------|-------------|-------------------------------------------------------------------------------------------------|
-| -id       | Obligatorio | Especifica el id de la partición. Se utilizará para saber la partición y el disco que se utilizará para hacer crear la carpeta.|
-| -path       | Obligatorio | Este parámetro será la ruta de la carpeta que se creará. Si lleva espacios en blanco deberá encerrarse entre comillas.<br>Si no existen las carpetas padres, debe mostrar error, a menos que se utilice el parámetro –p, que se explica posteriormente.|
+| -path       | Obligatorio | Este parámetro será la ruta de la carpeta que se creará. Si lleva espacios en blanco deberá encerrarse entre comillas.<br>Si no existen las carpetas padres, debe mostrar error, a menos que se utilice el parámetro -p, que se explica posteriormente.|
 | -p       | Obligatorio | Si se utiliza este parámetro y las carpetas padres en el parametro **path** no existen, entonces deben crearse. <br>Si ya existen, no realizara nada. No recibirá ningún valor, si lo recibe debe mostrar error.|
 
 ### 📜 Script
@@ -186,7 +185,7 @@ Recibirá el nombre del reporte que se desea y lo generará con graphviz en una 
 
 | Parámetro | Categoría   | Descripción                                                                                                                                                                                                                   |
 |-----------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>SB<br>JOURNALING<br>BLOCK<br>BM_INODE<br>BM_BLOCK<br>TREE<br>INODE<br>FILE<br>LS<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
+| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>SB<br>JOURNALING<br>BM_INODE<br>BM_BLOCK<br>TREE<br>BLOCK<br>INODE<br>FILE<br>LS<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
 | -path     | Obligatorio | Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error. Indica una carpeta y el nombre que tendrá el reporte. Si no existe la carpeta, deberá crearla. Si lleva espacios se encerrará entre comillas |
 | -id       | Obligatorio | Indica el id de la partición que se utilizará. Si el reporte es sobre la información del disco, se utilizará el disco al que pertenece la partición. Si no existe debe mostrar un error.                                      |
 

@@ -17,8 +17,6 @@ constant csnt_cap;
 
 void adm_cap::mkdir(map<string, string> param_got, disco::User UserLoggedIn){
     if (param_got.size() == 0){return;}
-
-    //testCrearNuevosInodos(param_got, UserLoggedIn);
     
     /*Obteniendo datos*/
     string comentario = param_got["-comentario"];
@@ -151,19 +149,12 @@ void adm_cap::mkdir(map<string, string> param_got, disco::User UserLoggedIn){
             break;
         }
         /*Final - Verificacion de Permisos*/
-        
-        //Se verifica que aun halla espacio en la particion, por lo tanto como minimo debe de
-        //haber 1 inodo y 2 bloques disponibles para poder insertar la nueva carpeta
-        if (sp_user->s_free_blocks_count <= 1 || sp_user->s_free_inodes_count <= 0){
-            cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
-            break;
-        }
-        
+                
         //Posiciones de los inodos y bloques a insertar
         int pos_nuevo_inodo_a_insertar = sp_user->s_first_ino;
         int pos_bloque_nuevo = sp_user->s_first_blo;
         bool encontro_puntero_disponible = false;
-        editInodeFolder(inodoPadre, pos_inodo_a_editar, pos_nuevo_inodo_a_insertar, nombre_inodo_nuevo, path_montura, &encontro_puntero_disponible, sp_user, &pos_bloque_nuevo);
+        editInodeFolder(comentario, inodoPadre, pos_inodo_a_editar, pos_nuevo_inodo_a_insertar, nombre_inodo_nuevo, path_montura, &encontro_puntero_disponible, sp_user, &pos_bloque_nuevo);
         if (encontro_puntero_disponible){
             if (sp_user->s_filesystem_type == 3){
                 insertJournal(vectorToString(lista_path_completo), 'C', 664, '0', nombre_inodo_nuevo, UserLoggedIn.usuario, actualMount, *sp_user);
@@ -172,9 +163,6 @@ void adm_cap::mkdir(map<string, string> param_got, disco::User UserLoggedIn){
             fseek(file, actualMount.part_start, SEEK_SET);
             fwrite(sp_user, csnt_cap.SIZE_SPB, 1, file);
             response = true;
-        }else{
-            cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
-            break;
         }
     }
     
@@ -186,85 +174,123 @@ void adm_cap::mkdir(map<string, string> param_got, disco::User UserLoggedIn){
 
 }
 
-void adm_cap::editInodeFolder(disco::Inode inodo_a_editar, int pos_inodo_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block){
+void adm_cap::editInodeFolder(string comentario, disco::Inode inodo_a_editar, int pos_inodo_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block){
     
     //Apuntadores del 1 al 12
     for (int i = 0; i < 12; i++){
-
-        //Se verifica el primer apuntador ya que este posee SIEMPRE un bloque de carpetas
-        if (i == 0 && !(*encontro_puntero_disponible)){
-            
-            FILE *file = fopen(path.c_str(), "rb+");
-            
-            //Se lee el bloque de tipo carpeta
-            disco::Folderblock carpeta;            
-            fseek(file, spb->s_block_start + (inodo_a_editar.i_block[0] * csnt_cap.SIZE_FB), SEEK_SET);
-            fread(&carpeta, csnt_cap.SIZE_FB, 1, file);
-            //Puntero 1 y 2: Apuntan al padre y al inodo mismo
-            //Puntero 3
-            if (carpeta.b_content[2].b_inodo == -1){
+        //Se verifica la existencia de un apuntador
+        if(inodo_a_editar.i_block[i] != -1 && !(*encontro_puntero_disponible)){
+            ////PARA TEST DE LOS DEMAS APUNTADORES ES NECESARIO COMENTAR ESTE BLOQUE DE CODIGO////
+            /*
+                Como minimo debe de haber espacio disponible: 1 Inodo y 1 Bloque
+                Inodo1 = Es el nuevo inodo de tipo carpeta a crear
+                Bloque1 = Es el bloque de tipo carpeta que tendra el inodo 1
+            */
+            if (spb->s_free_blocks_count <= 0 && spb->s_free_inodes_count <= 0){
+                cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+                break;
+            }else{
+                FILE *file = fopen(path.c_str(), "rb+");
+                //Se lee el bloque de tipo carpeta
+                disco::Folderblock carpeta;            
+                fseek(file, spb->s_block_start + (inodo_a_editar.i_block[i] * csnt_cap.SIZE_FB), SEEK_SET);
+                fread(&carpeta, csnt_cap.SIZE_FB, 1, file);
+                for (int i = 0; i < 4; i++){
+                    if (carpeta.b_content[i].b_inodo == -1){
+                        *encontro_puntero_disponible = true;
+                        //Se asigna la posicion del bloque de carpeta al puntero del inodo
+                        carpeta.b_content[i].b_inodo = pos_nuevo_inodo_a_insertar;
+                        strcpy(carpeta.b_content[i].b_name, nombre_inodo_a_insertar.c_str());
+                        break;
+                    }
+                }
+                //Se actualiza
+                fseek(file, spb->s_block_start + (inodo_a_editar.i_block[i] * csnt_cap.SIZE_FB), SEEK_SET);
+                fwrite(&carpeta, csnt_cap.SIZE_FB, 1, file);
+                fclose(file);
+            }
+        }
+        //Si no existe un bloque de carpetas este lo crea
+        else if(inodo_a_editar.i_block[i] == -1 && !(*encontro_puntero_disponible)){
+            /*
+                Como minimo debe de haber espacio disponible: 1 Inodo y 2 Bloques
+                Bloque1 = Es el nuevo bloque de tipo carpeta en donde su primer apuntador apunta al Inodo1
+                Inodo1 = Es el nuevo inodo de tipo carpeta a crear
+                Bloque2 = Es el bloque de tipo carpeta que tendra el inodo 1 en su primer apuntador                
+            */
+            if (spb->s_free_blocks_count <= 1 && spb->s_free_inodes_count <= 0){
+                cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+                break;
+            }else{
                 *encontro_puntero_disponible = true;
+                FILE *file = fopen(path.c_str(), "rb+");
+                //Se crea el nuevo bloque de carpetas
+                disco::Folderblock nuevo_bloque_carpeta;
+                nuevo_bloque_carpeta.b_content[0].b_inodo = pos_nuevo_inodo_a_insertar;
+                strcpy(nuevo_bloque_carpeta.b_content[0].b_name, nombre_inodo_a_insertar.c_str());
+                //Se escribe el bloque de carpeta
+                fseek(file, spb->s_block_start + ((*pos_block) * csnt_cap.SIZE_FB), SEEK_SET);
+                fwrite(&nuevo_bloque_carpeta, csnt_cap.SIZE_FB, 1, file);
+                //Se almacena el bloque de carpeta
+                fclose(file);
                 //Se asigna la posicion del bloque de carpeta al puntero del inodo
-                carpeta.b_content[2].b_inodo = pos_nuevo_inodo_a_insertar;
-                strcpy(carpeta.b_content[2].b_name, nombre_inodo_a_insertar.c_str());
+                inodo_a_editar.i_block[i] = (*pos_block);
+                //Se setea un 1 en ese espacio disponible para confirmar su utilizacion en esa posicion
+                setPositionBMBlock(*pos_block, path, *spb);
+                //Se asigna una nueva posicion a la posicion del bloque
+                *pos_block = getPositionBMBlock(*spb, path);
+                spb->s_free_blocks_count -= 1;
             }
-            //Puntero 4
-            else if(carpeta.b_content[3].b_inodo == -1){
-                 *encontro_puntero_disponible = true;
-                //Se asigna la posicion del bloque de carpeta al puntero del inodo
-                carpeta.b_content[3].b_inodo = pos_nuevo_inodo_a_insertar;
-                strcpy(carpeta.b_content[3].b_name, nombre_inodo_a_insertar.c_str());
-            }
+        }
+    }
 
-            //Se actualiza
-            fseek(file, spb->s_block_start + (inodo_a_editar.i_block[0] * csnt_cap.SIZE_FB), SEEK_SET);
-            fwrite(&carpeta, csnt_cap.SIZE_FB, 1, file);
-            fclose(file);
-        }else if(i > 0 && inodo_a_editar.i_block[i] == -1 && !(*encontro_puntero_disponible)){
+    //Apuntador 13 - Se apunta a una estructura de apuntadores
+    //En el caso que encontro un apuntador que esta siendo utilizado y este apunta a un bloque de punteros
+    if (inodo_a_editar.i_block[12] != -1 && !(*encontro_puntero_disponible)){
+        /*
+            Como minimo debe de haber espacio disponible: 1 Inodo y 2 Bloques
+            Bloque1 = Es el nuevo bloque de tipo carpeta en donde su primer apuntador apunta al Inodo1, este es en el caso de que no se encuentre un bloque tipo carpeta
+            Inodo1 = Es el nuevo inodo de tipo carpeta a crear
+            Bloque2 = Es el bloque de tipo carpeta que tendra el inodo 1 en su primer apuntador         
+        */
+        if (spb->s_free_blocks_count <= 1 && spb->s_free_inodes_count <= 0){
+            cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        }else{
+            editBlockPointer("BSI", comentario, inodo_a_editar.i_block[12], pos_nuevo_inodo_a_insertar, nombre_inodo_a_insertar, path, encontro_puntero_disponible, spb, pos_block);
+        }
+    }
+    //En este caso lo crea
+    else if(inodo_a_editar.i_block[12] == -1 && !(*encontro_puntero_disponible)){
+        /*
+            Como minimo debe de haber espacio disponible: 1 Inodo y 3 Bloques
+            Bloque1 = Es el nuevo bloque de tipo apuntador en donde su primer apuntador apunta al Bloque2
+            Bloque2 = Es el nuevo bloque de tipo carpeta en donde su primer apuntador apunta al Inodo1
+            Inodo1 = Es el nuevo inodo de tipo carpeta a crear
+            Bloque3 = Es el bloque de tipo carpeta que tendra el inodo 1 en su primer apuntador                
+        */
+        if (spb->s_free_blocks_count <= 2 && spb->s_free_inodes_count <= 0){
+            cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay mas espacio para ingresar carpetas o archivos en esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        }else{
             *encontro_puntero_disponible = true;
             FILE *file = fopen(path.c_str(), "rb+");
-            //Se crea el nuevo bloque de carpetas
-            disco::Folderblock nuevo_bloque_carpeta;
-            nuevo_bloque_carpeta.b_content[0].b_inodo = pos_nuevo_inodo_a_insertar;
-            strcpy(nuevo_bloque_carpeta.b_content[0].b_name, nombre_inodo_a_insertar.c_str());
-            //Se escribe el bloque de carpeta
-            fseek(file, spb->s_block_start + ((*pos_block) * csnt_cap.SIZE_FB), SEEK_SET);
-            fwrite(&nuevo_bloque_carpeta, csnt_cap.SIZE_FB, 1, file);
-            //Se almacena el bloque de carpeta
+            //Se crea el nuevo bloque de apuntadores
+            disco::Pointerblock nuevo_bloque_puntero;
+            //Se escribe el bloque de apuntador
+            fseek(file, spb->s_block_start + ((*pos_block) * csnt_cap.SIZE_PB), SEEK_SET);
+            fwrite(&nuevo_bloque_puntero, csnt_cap.SIZE_PB, 1, file);
+            //Se almacena el bloque de apuntadores
             fclose(file);
-            //Se asigna la posicion del bloque de carpeta al puntero del inodo
-            inodo_a_editar.i_block[i] = (*pos_block);
+            //Se asigna la posicion del bloque de punteros al puntero 12 del inodo
+            inodo_a_editar.i_block[12] = (*pos_block);
+            int pos_bloque_a_editar = (*pos_block);
             //Se setea un 1 en ese espacio disponible para confirmar su utilizacion en esa posicion
             setPositionBMBlock(*pos_block, path, *spb);
             //Se asigna una nueva posicion a la posicion del bloque
             *pos_block = getPositionBMBlock(*spb, path);
             spb->s_free_blocks_count -= 1;
-        }else if(i > 0 && inodo_a_editar.i_block[i] != -1 && !(*encontro_puntero_disponible)){
-            FILE *file = fopen(path.c_str(), "rb+");
-            //Se lee el bloque de tipo carpeta
-            disco::Folderblock carpeta;            
-            fseek(file, spb->s_block_start + (inodo_a_editar.i_block[i] * csnt_cap.SIZE_FB), SEEK_SET);
-            fread(&carpeta, csnt_cap.SIZE_FB, 1, file);
-            for (int i = 0; i < 4; i++){
-                if (carpeta.b_content[i].b_inodo == -1){
-                    *encontro_puntero_disponible = true;
-                    //Se asigna la posicion del bloque de carpeta al puntero del inodo
-                    carpeta.b_content[i].b_inodo = pos_nuevo_inodo_a_insertar;
-                    strcpy(carpeta.b_content[i].b_name, nombre_inodo_a_insertar.c_str());
-                    break;
-                }
-            }
-            
-            //Se actualiza
-            fseek(file, spb->s_block_start + (inodo_a_editar.i_block[i] * csnt_cap.SIZE_FB), SEEK_SET);
-            fwrite(&carpeta, csnt_cap.SIZE_FB, 1, file);
-            fclose(file);            
-        }
-    }
-
-    //Apuntador 13 - Se apunta a una estructura de apuntadores
-    if (inodo_a_editar.i_block[12] != -1 && !(*encontro_puntero_disponible)){
-        //############################################################################
+            //Lo que se debe de hacer a continuacion es editar el bloque
+            editBlockPointer("BSI", comentario, pos_bloque_a_editar, pos_nuevo_inodo_a_insertar, nombre_inodo_a_insertar, path, encontro_puntero_disponible, spb, pos_block);            
+        }        
     }
 
     //Apuntador 14 - Se apunta a una estructura de apuntadores
@@ -282,6 +308,66 @@ void adm_cap::editInodeFolder(disco::Inode inodo_a_editar, int pos_inodo_a_edita
         fseek(file, spb->s_inode_start + (pos_inodo_a_editar * csnt_cap.SIZE_I), SEEK_SET);
         fwrite(&inodo_a_editar, csnt_cap.SIZE_I, 1, file);
         fclose(file);
+    }
+}
+
+void adm_cap::editBlockPointer(string tipo_bloque, string comentario, int pos_bloque_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block){
+    
+    bool puntero_disponible = false;
+    if (tipo_bloque == "BSI"){
+        FILE *file = fopen(path.c_str(), "rb+");
+        //Se lee el bloque de apuntadores
+        disco::Pointerblock bloque_puntero;
+        fseek(file, spb->s_block_start + (pos_bloque_a_editar * csnt_cap.SIZE_PB), SEEK_SET);
+        fread(&bloque_puntero, csnt_cap.SIZE_PB, 1, file);
+
+        for (int i = 0; i < 15; i++){
+            if (bloque_puntero.b_pointers[i] != -1 && !puntero_disponible){
+                ////PARA TEST DE LOS DEMAS APUNTADORES ES NECESARIO COMENTAR ESTE BLOQUE DE CODIGO////
+                disco::Folderblock bloque_carpeta;
+                //Se lee el bloque de carpeta
+                fseek(file, spb->s_block_start + ((bloque_puntero.b_pointers[i]) * csnt_cap.SIZE_FB), SEEK_SET);
+                fread(&bloque_carpeta, csnt_cap.SIZE_FB, 1, file);
+                for (int i = 0; i < 4; i++){
+                    if (bloque_carpeta.b_content[i].b_inodo == -1 && !puntero_disponible){
+                        *encontro_puntero_disponible = true;
+                        puntero_disponible = true;
+                        bloque_carpeta.b_content[i].b_inodo = pos_nuevo_inodo_a_insertar;
+                        strcpy(bloque_carpeta.b_content[i].b_name, nombre_inodo_a_insertar.c_str());
+                    }
+                }
+                fseek(file, spb->s_block_start + ((bloque_puntero.b_pointers[i]) * csnt_cap.SIZE_FB), SEEK_SET);
+                fwrite(&bloque_carpeta, csnt_cap.SIZE_FB, 1, file);
+            }else if(bloque_puntero.b_pointers[i] == -1 && !puntero_disponible){
+                *encontro_puntero_disponible = true;
+                puntero_disponible = true;
+                bloque_puntero.b_pointers[i] = (*pos_block);
+                disco::Folderblock nuevo_bloque_carpeta;
+                nuevo_bloque_carpeta.b_content[0].b_inodo = pos_nuevo_inodo_a_insertar;
+                strcpy(nuevo_bloque_carpeta.b_content[0].b_name, nombre_inodo_a_insertar.c_str());
+                //Se escribe el bloque de carpeta
+                fseek(file, spb->s_block_start + ((*pos_block) * csnt_cap.SIZE_FB), SEEK_SET);
+                fwrite(&nuevo_bloque_carpeta, csnt_cap.SIZE_FB, 1, file);
+                //Se setea un 1 en ese espacio disponible para confirmar su utilizacion en esa posicion
+                setPositionBMBlock(*pos_block, path, *spb);
+                //Se asigna una nueva posicion a la posicion del bloque
+                *pos_block = getPositionBMBlock(*spb, path);
+                spb->s_free_blocks_count -= 1;
+            }
+        }   
+        
+        //Se almacena el bloque de apuntadores
+        fseek(file, spb->s_block_start + (pos_bloque_a_editar * csnt_cap.SIZE_PB), SEEK_SET);
+        fwrite(&bloque_puntero, csnt_cap.SIZE_PB, 1, file);
+        fclose(file);
+    }
+    //
+    else if(tipo_bloque == "BDI"){
+
+    }
+    //
+    else if(tipo_bloque == "BTI"){
+
     }
 }
 
