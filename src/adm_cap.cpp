@@ -531,7 +531,7 @@ void adm_cap::searchInode(string path, int *pos_padre, int *pos_inodo, disco::Su
     fseek(file, spb->s_inode_start + ((*pos_inodo) * csnt_cap.SIZE_I), SEEK_SET);
     fread(inodo, csnt_cap.SIZE_I, 1, file);
     
-    //Esta variables nos sirve para que deje de buscar en otro apuntadores
+    //Esta variable nos sirve para que deje de buscar en otro apuntadores
     bool encontrado = false;
 
     if (inodo->i_type == '0'){
@@ -609,11 +609,88 @@ void adm_cap::searchInode(string path, int *pos_padre, int *pos_inodo, disco::Su
         }
         //Se lee el apuntador 13
         if(inodo->i_block[12] != -1 && encontrado == false){
-            //#############################################################
+            disco::Pointerblock pointer;
+            fseek(file, spb->s_block_start + (inodo->i_block[12] * csnt_cap.SIZE_PB), SEEK_SET);
+            fread(&pointer, csnt_cap.SIZE_PB, 1, file);
+            for (int i = 0; i < 15; i++){
+                //Se encontro un bloque de carpeta
+                if (pointer.b_pointers[i] != -1){
+                    disco::Folderblock folder;
+                    fseek(file, spb->s_block_start + (pointer.b_pointers[i] * csnt_cap.SIZE_FB), SEEK_SET);
+                    fread(&folder, csnt_cap.SIZE_FB, 1, file);
+                    for (int i = 0; i < 4; i++){
+                        //En el caso de encontrar un folder
+                        if (folder.b_content[i].b_name == nombre_archivo_o_carpeta && typeText(nombre_archivo_o_carpeta) == 'F'){
+                            //Se elimina el primer elemento del listado_path
+                            listado_path->erase(listado_path->begin());
+                            //Se asigna la posicion del inodo encontrado
+                            *pos_inodo = folder.b_content[i].b_inodo;
+                            //No hay mas datos en el path
+                            if (listado_path->size() == 0){
+                                encontrado = true;
+                                break;
+                            }
+                            //Hay mas datos en el path
+                            else if(listado_path->size() > 0){
+                                searchInode(path, pos_padre, pos_inodo, spb, listado_path);
+                            }
+                        }
+                        //En el caso de hallar un archivo
+                        else if(folder.b_content[i].b_name == nombre_archivo_o_carpeta && typeText(nombre_archivo_o_carpeta) == 'A'){
+                            listado_path->erase(listado_path->begin());
+                            *pos_inodo = folder.b_content[i].b_inodo;                        
+                            encontrado = true;
+                            break;
+                        }
+                    }                    
+                }                
+            }
         }
         //Se lee el apuntador 14
         else if(inodo->i_block[13] != -1 && encontrado == false){
-            //#############################################################
+            disco::Pointerblock pointer_principal;
+            fseek(file, spb->s_block_start + (inodo->i_block[13] * csnt_cap.SIZE_PB), SEEK_SET);
+            fread(&pointer_principal, csnt_cap.SIZE_PB, 1, file);
+            for (int i = 0; i < 15; i++){
+                if (pointer_principal.b_pointers[i] != -1){
+                    disco::Pointerblock sub_pointer;
+                    fseek(file, spb->s_block_start + (pointer_principal.b_pointers[i] * csnt_cap.SIZE_PB), SEEK_SET);
+                    fread(&sub_pointer, csnt_cap.SIZE_PB, 1, file);
+                    for (int i = 0; i < 15; i++){
+                        //Se encontro un bloque de carpeta
+                        if (sub_pointer.b_pointers[i] != -1){
+                            disco::Folderblock folder;
+                            fseek(file, spb->s_block_start + (sub_pointer.b_pointers[i] * csnt_cap.SIZE_FB), SEEK_SET);
+                            fread(&folder, csnt_cap.SIZE_FB, 1, file);
+                            for (int i = 0; i < 4; i++){
+                                //En el caso de encontrar un folder
+                                if (folder.b_content[i].b_name == nombre_archivo_o_carpeta && typeText(nombre_archivo_o_carpeta) == 'F'){
+                                    //Se elimina el primer elemento del listado_path
+                                    listado_path->erase(listado_path->begin());
+                                    //Se asigna la posicion del inodo encontrado
+                                    *pos_inodo = folder.b_content[i].b_inodo;
+                                    //No hay mas datos en el path
+                                    if (listado_path->size() == 0){
+                                        encontrado = true;
+                                        break;
+                                    }
+                                    //Hay mas datos en el path
+                                    else if(listado_path->size() > 0){
+                                        searchInode(path, pos_padre, pos_inodo, spb, listado_path);
+                                    }
+                                }
+                                //En el caso de hallar un archivo
+                                else if(folder.b_content[i].b_name == nombre_archivo_o_carpeta && typeText(nombre_archivo_o_carpeta) == 'A'){
+                                    listado_path->erase(listado_path->begin());
+                                    *pos_inodo = folder.b_content[i].b_inodo;                        
+                                    encontrado = true;
+                                    break;
+                                }
+                            }                    
+                        }                
+                    }
+                }                
+            }
         }
         //Se lee el apuntador 15
         else if(inodo->i_block[14] != -1 && encontrado == false){
