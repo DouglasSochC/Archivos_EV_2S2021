@@ -111,7 +111,8 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "mkfile"){
             cout << "En desarrollo :D" << endl;
         }else if(comando == "cat"){
-            cout << "En desarrollo :D" << endl;
+            map<string, string> param_got = prmts_scnr.param_cat(tokens);
+            admcap_scnr.cat(param_got, scrp_UsuarioLog);
         }else if(comando == "ren"){
             map<string, string> param_got = prmts_scnr.param_ren(tokens);
             admcap_scnr.ren(param_got, scrp_UsuarioLog);

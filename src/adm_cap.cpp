@@ -338,6 +338,132 @@ void adm_cap::ren(map<string, string> param_got, disco::User UserLoggedIn){
     fclose(file);
 }
 
+void adm_cap::cat(map<string, string> param_got, disco::User UserLoggedIn){
+    if (param_got.size() == 0){return;}
+    
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"];
+    string path = param_got["-file1"];
+
+    /*Formateo de datos*/
+    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
+
+    /*Flujo del void*/
+    //Se verifica que halla una sesion activa
+    if (UserLoggedIn.id == -1){
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No hay una sesion activa " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        return;
+    }
+
+    //Se obtiene la montura
+    disco::Mount actualMount = UserLoggedIn.montura;
+    string path_montura = actualMount.path;
+    if (actualMount.status == '0'){
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No existe el id " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        return;
+    }
+
+    //Se verifica que el path sea correcto
+    vector<string> lista_path = tokenizarPath(path, 'A');
+    if (lista_path.size() == 0){
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " El path ingresado es incorrecto; Los errores pueden ser 1. Debido a que excede los doce caracteres disponibles para una carpeta. 2. Es un problema de ruta " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        return;
+    }    
+
+    //Se verifica si es un usuario root
+    bool isRoot = (UserLoggedIn.usuario == "root" && UserLoggedIn.contrasenia == "123");    
+
+    //Creo una variable de tipo FILE
+    FILE *file = fopen(path_montura.c_str(), "rb+");
+
+    //Obtengo el super bloque
+    disco::Superblock *sp_user = new disco::Superblock();
+    fseek(file, actualMount.part_start, SEEK_SET);
+    fread(sp_user, csnt_cap.SIZE_SPB, 1, file);
+    if (sp_user->s_filesystem_type == 0)    {
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No se ha formateado esta particion " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        fclose(file);
+        return;
+    }
+
+    //INI - SE VERIFICA LA EXISTENCIA DEL PATH INGRESADO
+    vector <vector<string>> path_niveles;
+    vector <string> temporal;
+    for (int i = 0; i < lista_path.size(); i++){
+        temporal.push_back(lista_path[i]);
+        path_niveles.push_back(temporal);
+    }
+    temporal.clear();
+
+    //Se verificara hasta que diagonal del path ya no encuentra alguna carpeta
+    int diagonal = -1;
+    for (int i = 0; i < path_niveles.size(); i++){
+        //Archivos y Carpetas no Encontrados
+        vector <string> ACE = path_niveles[i];
+        int pos_inodo_a_editar = 0;
+        int pos_padre = -1;
+        searchInode(path_montura, &pos_padre, &pos_inodo_a_editar, sp_user, &ACE);
+        if (ACE.size() > 0){
+            diagonal = i;
+            break;
+        }
+    }
+    //Se busca cuantas carpetas falta por ingresar
+    int diferencia = (diagonal == -1)? 0: path_niveles.size() - diagonal;
+    //Se verifica si hace falta ingresar mas de una carpeta
+    if (diferencia > 0){
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No existe el archivo segun el path ingresado " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        fclose(file);
+        return;
+    }
+    //FIN - SE VERIFICA LA EXISTENCIA DEL PATH INGRESADO
+    
+    //Se busca el bloque de carpeta que posee el nombre a modificar
+    int pos_inodo_a_editar = 0;
+    int pos_inodo_padre = -1;
+    int pos_bloque_encontrado = -1;
+    string old_name = lista_path[lista_path.size() - 1];
+    searchBlock(path_montura, &pos_inodo_padre, &pos_inodo_a_editar, &pos_bloque_encontrado, sp_user, &lista_path);
+    disco::Inode inodoPadre = getInodo(pos_inodo_padre, *sp_user, path_montura);
+
+    /*Inicio - Verificacion de Permisos*/
+    int id_propietario_inodo = inodoPadre.i_uid;
+    int id_grupo_inodo = inodoPadre.i_gid;
+    int permiso_padre_inodo = inodoPadre.i_perm;
+    int permiso_propietario_inodo = (permiso_padre_inodo / 100) % 100;
+    int permiso_grupo_inodo = (permiso_padre_inodo / 10) % 10;
+    int permiso_otro_inodo = permiso_padre_inodo % 10;
+    
+    //Se busca el grupo del usuario
+    string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
+    //Se busca el id del grupo en el user.txt
+    int id_grupo_UserLoggedIn = checkGroup(text, UserLoggedIn.grupo).id;
+    int id_propietario_UserLoggedIn = UserLoggedIn.id;
+    
+    //Se verifica que tipo de permiso posee
+    int tipo_permiso = -1;
+    if (id_propietario_inodo == UserLoggedIn.id){
+        tipo_permiso = permiso_propietario_inodo;
+    }else if(id_grupo_inodo == id_grupo_UserLoggedIn){
+        tipo_permiso = permiso_grupo_inodo;
+    }else {
+        tipo_permiso = permiso_otro_inodo;
+    }
+    //Se define todos los permisos para el usuario root
+    tipo_permiso = isRoot ? 7: tipo_permiso;
+    
+    if (!(tipo_permiso == 4 || tipo_permiso == 5 || tipo_permiso == 6 || tipo_permiso == 7)){
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No se posee permisos de lectura " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        fclose(file);
+        return;
+    }
+    /*Final - Verificacion de Permisos*/
+
+    string contenido = getContentArchive(pos_inodo_a_editar, path_montura, *sp_user);
+    cout << csnt_cap.GREEN << contenido << endl;
+    fclose(file);
+}
+
 void adm_cap::editNameInBlockFolder(int position, string old_name, string new_name, string path, disco::Superblock spb){
     //Creo una variable de tipo FILE
     FILE *file = fopen(path.c_str(), "rb+");
@@ -1236,6 +1362,42 @@ string adm_cap::getArchiveUserTXT(int part_start_partition, string path){
     return response;
 }
 
+string adm_cap::getContentArchive(int position_inode, string path, disco::Superblock spb){
+    string response;
+    //Creo una variable de tipo FILE
+    FILE *file = fopen(path.c_str(), "rb");
+
+    //Obtengo el inodo del archivo debido a que se debe de leer por completo
+    disco::Inode inode_user;
+    fseek(file, spb.s_inode_start + (position_inode * csnt_cap.SIZE_I), SEEK_SET);
+    fread(&inode_user, csnt_cap.SIZE_I, 1, file);
+    
+    //Apuntadores del 1 al 12
+    for (int i = 0; i < 12; i++){
+        if (inode_user.i_block[i] != -1){
+            getContentByTypePointer(&response, "BD", path, spb, inode_user.i_block[i]);
+        }
+    }
+    
+    //Apuntador 13 - Se apunta a una estructura de apuntadores
+    if (inode_user.i_block[12] != -1){
+        getContentByTypePointer(&response, "BSI", path, spb, inode_user.i_block[12]);
+    }
+
+    //Apuntador 14 - Se apunta a una estructura de apuntadores
+    if (inode_user.i_block[13] != -1){
+        getContentByTypePointer(&response, "BDI", path, spb, inode_user.i_block[13]);
+    }
+
+    //Apuntador 15 - Se apunta a una estructura de apuntadores
+    if (inode_user.i_block[14] != -1){
+        getContentByTypePointer(&response, "BTI", path, spb, inode_user.i_block[14]);
+    }
+
+    fclose(file);
+    return response;
+}
+
 void adm_cap::getContentByTypePointer(string *contenido, string tipo_apuntador, string path, disco::Superblock spb, int pos_block){
 
     FILE *file = fopen(path.c_str(), "rb");
@@ -1399,28 +1561,3 @@ string adm_cap::vectorToString(vector<string> path){
     }
     return response;
 }
-
-void adm_cap::cat(map<string, string> param_got, disco::Mount partitionMount, disco::User userLoggedIn){
-    if (param_got.size() == 0){return;}
-
-    /*Obteniendo datos*/
-    string comentario = param_got["-comentario"];
-    string id = param_got["-id"];
-    string path = param_got["-path"];
-    string var_p;
-    if (param_got.find("-p") == param_got.end()) {
-        //NO SE ENCONTRO
-    } else {
-        var_p = "p";
-    }
-
-    /*Formateo de datos*/
-    path = (path.substr(0,1) == "\"") ? path.substr(1, path.size()-2): path;
-
-    /*Flujo del void*/
-    //Se verifica que sea usuario root
-    bool isRoot = (userLoggedIn.usuario == "root" && userLoggedIn.contrasenia == "123");    
-
-    cout << csnt_cap.GREEN << "RESPUESTA:" << csnt_cap.NC << " La carpeta ha sido creada correctamente " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
-}
-//CREAR FUNCION CAT
