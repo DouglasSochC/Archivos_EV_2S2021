@@ -324,6 +324,50 @@ map<string, string> parameters::param_mkfs(vector<string> tokens){
 
 /*INI CAP*/
 
+map<string, string> parameters::param_ren(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-path" || llave == "-name")){
+                cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro " << llave << " no es valido para el comando ejecutado" << endl;
+                map_u.clear();
+                return map_u;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro " << tokens[i] << " no es valido para el comando ejecutado" << endl;
+            map_u.clear();
+            return map_u;
+        }
+    }
+    
+    string comentario = map_u["-comentario"];
+    string path = map_u["-path"];
+    string name = map_u["-name"];
+    //Formateo del name
+    name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
+
+    if (!path.empty() && !name.empty()){
+        if (name.length() > 10){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No se puede ingresar el grupo debido a que excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-path, -name) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
+
 map<string, string> parameters::param_mkdir(vector<string> tokens){
     
     map<string, string> map_u;
@@ -459,6 +503,9 @@ map<string, string> parameters::param_login(vector<string> tokens){
     string usr = map_u["-usr"];
     string pwd = map_u["-pwd"];
     string id = map_u["-id"];
+    //Formateo
+    usr = (usr.substr(0,1) == "\"") ? usr.substr(1, usr.size()-2): usr;
+    pwd = (pwd.substr(0,1) == "\"") ? pwd.substr(1, pwd.size()-2): pwd;
 
     if (!usr.empty() && !pwd.empty() && !id.empty()){
         if (usr.length() > 10){
@@ -505,7 +552,7 @@ map<string, string> parameters::param_mkgrp(vector<string> tokens){
     }
     string comentario = map_u["-comentario"];
     string name = map_u["-name"];
-    ///*Formateo el name
+    //Formateo
     name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
 
     if (!name.empty()){
@@ -550,6 +597,8 @@ map<string, string> parameters::param_rmgrp(vector<string> tokens){
     }
     string comentario = map_u["-comentario"];
     string name = map_u["-name"];
+    //Formateo
+    name = (name.substr(0,1) == "\"") ? name.substr(1, name.size()-2): name;
 
     if (!name.empty()){
         if (name.length() > 10){
@@ -595,6 +644,10 @@ map<string, string> parameters::param_mkusr(vector<string> tokens){
     string usr = map_u["-usr"];
     string pwd = map_u["-pwd"];
     string grp = map_u["-grp"];
+    //Formateo
+    usr = (usr.substr(0,1) == "\"") ? usr.substr(1, usr.size()-2): usr;
+    pwd = (pwd.substr(0,1) == "\"") ? pwd.substr(1, pwd.size()-2): pwd;
+    grp = (grp.substr(0,1) == "\"") ? grp.substr(1, grp.size()-2): grp;
 
     if (!usr.empty() && !pwd.empty() && !grp.empty()){
         if (usr.length() > 10){
@@ -647,7 +700,9 @@ map<string, string> parameters::param_rmusr(vector<string> tokens){
     }
     string comentario = map_u["-comentario"];
     string usr = map_u["-usr"];
-
+    //Formateo
+    usr = (usr.substr(0,1) == "\"") ? usr.substr(1, usr.size()-2): usr;
+    
     if (!usr.empty()){
         if (usr.length() > 10){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El nombre del usuario excede la cantidad de 10 caracteres " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;

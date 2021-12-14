@@ -12,13 +12,20 @@ class adm_cap
 public:
 
     void mkdir(map<string, string> param_got, disco::User UserLoggedIn);
+    void ren(map<string, string> param_got, disco::User UserLoggedIn);
     void cat(map<string, string> param_got, disco::Mount partitionMount, disco::User UserLoggedIn);
-    
     /*
         Este metodo se encarga de buscar y encontrar un path dentro de un inodo, sin embargo el path a 
         buscar debe de venir en forma de lista, conforme va hallando el nombre de la carpeta o archivo, 
         este se va eliminado del vector del path para no tomarlo en cuenta posteriormente.
-        Nota: Este solo puede buscar en los primeros 12 apuntadores de un inodo
+        Nota: Este solo puede buscar hasta el apuntador 14
+    */
+    void searchBlock(string path, int *pos_padre, int *pos_inodo, int *pos_block, disco::Superblock *spb, vector<string> *listado_path);
+    /*
+        Este metodo se encarga de buscar y encontrar un path dentro de un inodo, sin embargo el path a 
+        buscar debe de venir en forma de lista, conforme va hallando el nombre de la carpeta o archivo, 
+        este se va eliminado del vector del path para no tomarlo en cuenta posteriormente.
+        Nota: Este solo puede buscar hasta el apuntador 14
     */
     void searchInode(string path, int *pos_padre, int *pos_inodo, disco::Superblock *spb, vector<string> *listado_path);
     /*
@@ -28,6 +35,11 @@ public:
         Nota: Este solo puede editar los primeros 12 apuntadores del inodo
     */
     void editInodeFolder(string comentario, disco::Inode inodo_a_editar, int pos_inodo_a_editar, int pos_nuevo_inodo_a_insertar, string nombre_inodo_a_insertar, string path, bool *encontro_puntero_disponible, disco::Superblock *spb, int *pos_block);
+    /*
+        Este metodo se encarga de editar el nombre de un archivo o carpeta ingresado, segun
+        la posicion asignada
+    */
+    void editNameInBlockFolder(int position, string old_name, string new_name, string path, disco::Superblock spb);
     /*
         Este metodo se encarga de buscar el primer espacio libre entre los 15 apuntadores de un bloque de
         apuntadores, dependiendo de que tipo de apuntador sea, crea un bloque de carpetas o un bloque

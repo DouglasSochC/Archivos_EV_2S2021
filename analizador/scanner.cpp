@@ -108,9 +108,13 @@ void scanner::exec_command(vector<string> tokens){
         }else if(comando == "rmusr"){
             map<string, string> param_got = prmts_scnr.param_rmusr(tokens);
             admug_scnr.rmusr(param_got, scrp_UsuarioLog);
+        }else if(comando == "mkfile"){
+            cout << "En desarrollo :D" << endl;
         }else if(comando == "cat"){
-            map<string, string> param_got = prmts_scnr.param_cat(tokens);
-            //scrp_UsuarioLog = admcap_scnr.mkdir(scrp_UsuarioLog);
+            cout << "En desarrollo :D" << endl;
+        }else if(comando == "ren"){
+            map<string, string> param_got = prmts_scnr.param_ren(tokens);
+            admcap_scnr.ren(param_got, scrp_UsuarioLog);
         }else if(comando == "mkdir"){
             map<string, string> param_got = prmts_scnr.param_mkdir(tokens);
             admcap_scnr.mkdir(param_got, scrp_UsuarioLog);
