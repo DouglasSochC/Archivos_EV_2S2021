@@ -20,6 +20,7 @@ public:
     map<string, string> param_cat(vector<string> tokens);
     map<string, string> param_mkdir(vector<string> tokens);
     map<string, string> param_ren(vector<string> tokens);
+    map<string, string> param_mkfile(vector<string> tokens);
     map<string, string> param_login(vector<string> tokens);
     map<string, string> param_mkgrp(vector<string> tokens);
     map<string, string> param_rmgrp(vector<string> tokens);

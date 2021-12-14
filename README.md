@@ -174,7 +174,28 @@ Este comando permitirá cambiar el nombre de un archivo o carpeta, si el usuario
 | Parámetro | Categoría   | Descripción                                                                                     |
 |-----------|-------------|-------------------------------------------------------------------------------------------------|
 | -path       | Obligatorio | Este parámetro será la ruta del archivo o carpeta al que se le cambiará el nombre. Si lleva espacios en blanco deberá encerrarse entre comillas. Si no existe el archivo o carpeta o no tiene permisos de escritura sobre la carpeta o archivo, debe mostrarse un mensaje de error|
-| -p       | Obligatorio | Especificara el nuevo nombre del archivo, debe verificar que no exista un archivo con el mismo nombre, de ser asi debe mostrar un mensaje de error|
+| -name      | Obligatorio | Especificara el nuevo nombre del archivo, debe verificar que no exista un archivo con el mismo nombre, de ser asi debe mostrar un mensaje de error|
+
+#### 3. CAT
+
+Este comando permitira mostrar el contenido del archivo, si el usuario que actualmente esta logueado tiene acceso al permiso de lectura. Tendrá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -file1       | Obligatorio | Este parámetro será la ruta del archivo que se leerá. Si no existe el archivo o no tiene permiso de lectura, debe mostrarse un mensaje de error.|
+
+#### 4. MKFILE
+
+Este comando permitirá crear un archivo, el propietario será el usuario que actualmente ha iniciado sesión. Tendrá los permisos 664. El usuario deberá tener el permiso de escritura en la carpeta padre, si no debe mostrar un error. Tendrá los siguientes parámetros:
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -path       | Obligatorio | Este parámetro será la ruta del archivo que se creará. Si lleva espacios en blanco deberá encerrarse entre comillas. Si ya existe debe sobre escribir el archivo.<br>Si no existen las carpetas padres, debe mostrar error, a menos que se utilice el parámetro –p, que se explica posteriormente.|
+| -p      | Opcional | Si se utiliza este parámetro y las carpetas especificadas por el parámetro **-path** no existen, entonces deben crearse las carpetas padres.<br>Si ya existen, no deberá crear las carpetas. No recibirá ningún valor, si lo recibe debe mostrar error.|
+| -size      | Opcional | Este parámetro indicará el tamaño en bytes del archivo, el contenido serán números del 0 al 9 cuantas veces sea necesario.<br>Si no se utiliza este parámetro, el tamaño será 0 bytes. Si es negativo debe mostrar error.|
+| -cont      | Opcional | Indicará un archivo en el disco duro de la computadora que tendrá el contenido del archivo. Se utilizará para cargar contenido en el archivo. La ruta ingresada debe existir, si no mostrará un mensaje de error.|
+
+De venir -cont y -size en un mismo comando se deberá tomar solo el -cont.
 
 ### 📜 Script
 

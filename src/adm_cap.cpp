@@ -464,6 +464,23 @@ void adm_cap::cat(map<string, string> param_got, disco::User UserLoggedIn){
     fclose(file);
 }
 
+void adm_cap::mkfile(map<string, string> param_got, disco::User UserLoggedIn){
+    if (param_got.size() == 0){return;}
+    
+    /*Obteniendo datos*/
+    string comentario = param_got["-comentario"];
+    string path = param_got["-path"];
+    bool existencia_p = false;
+    if (param_got.find("-p") == param_got.end()) {
+        //NO SE ENCONTRO
+    } else {
+        existencia_p = true;
+    }
+    int size = atoi(param_got["-size"].c_str()) < 0 ? 0: atoi(param_got["-size"].c_str());
+    string cont = param_got["-cont"];    
+
+}
+
 void adm_cap::editNameInBlockFolder(int position, string old_name, string new_name, string path, disco::Superblock spb){
     //Creo una variable de tipo FILE
     FILE *file = fopen(path.c_str(), "rb+");

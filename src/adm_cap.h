@@ -14,6 +14,7 @@ public:
     void mkdir(map<string, string> param_got, disco::User UserLoggedIn);
     void ren(map<string, string> param_got, disco::User UserLoggedIn);
     void cat(map<string, string> param_got, disco::User UserLoggedIn);
+    void mkfile(map<string, string> param_got, disco::User UserLoggedIn);
     /*
         Este metodo se encarga de buscar y encontrar un path dentro de un inodo, sin embargo el path a 
         buscar debe de venir en forma de lista, conforme va hallando el nombre de la carpeta o archivo, 

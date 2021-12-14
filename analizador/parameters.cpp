@@ -459,6 +459,70 @@ map<string, string> parameters::param_cat(vector<string> tokens){
     return map_u;
 }
 
+map<string, string> parameters::param_mkfile(vector<string> tokens){
+    
+    map<string, string> map_u;
+    for (int i = 1; i < tokens.size(); i++){
+        vector<string> return_params = util_prmts.separateString(tokens[i]);
+        
+        //Se verifica que el parametro -p no tenga una asignacion
+        if(return_params.size() == 0 && util_prmts.toLowerString(tokens[i]) == "-p"){
+            return_params.push_back("-p");
+            return_params.push_back("");
+        }
+
+        if (return_params.size() == 2){
+            string llave = util_prmts.toLowerString(return_params[0]);
+            string valor = return_params[1];
+            if (!(llave == "-comentario" || llave == "-path" || llave == "-p" || llave == "-size" || llave == "-cont")){
+                cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro " << llave << " no es valido para el comando ejecutado" << endl;
+                map_u.clear();
+                return map_u;
+            }else{
+                if (!map_u[llave].empty()){
+                    cout << cnst_prmts.YELLOW << "AVISO:" << cnst_prmts.NC << " El parametro " << llave << " esta siendo ingresado 2 veces por lo cual se tomara como valor el primer " << llave << " encontrado" << endl;
+                }else{
+                    map_u[llave] = valor;
+                }
+            }
+        }else{
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro " << tokens[i] << " no es valido para el comando ejecutado" << endl;
+            map_u.clear();
+            return map_u;
+        }
+    }
+
+    string comentario = map_u["-comentario"];
+    string path = map_u["-path"];
+    string size = map_u["-size"];
+    string cont = map_u["-cont"];
+    string var_p;
+    if (map_u.find("-p") == map_u.end()) {
+        //NO EXISTE LA LLAVE
+    } else {
+        var_p = map_u["-p"];        
+    }
+    if (!path.empty()){
+        if(!var_p.empty()){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " Al parametro -P no se le debe asignar un valor " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!util_prmts.isNumber(size)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro -SIZE debe de ser un valor numerico " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(atoi(size.c_str()) < 0 && cont.empty()){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro -SIZE debe de ser mayor o igual a 0 " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }else if(!cont.empty() && !util_prmts.check_existFile(cont)){
+            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El path ingresado en el parametro -CONT no existe " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+            map_u.clear();
+        }
+    }else{
+        cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " No ha ingresado algunos de los campos obligatorios (-path) " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
+        map_u.clear();
+    }
+    return map_u;
+}
+
 /*FIN CAP*/
 
 /*INI UG*/
