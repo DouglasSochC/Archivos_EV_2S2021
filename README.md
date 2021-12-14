@@ -167,6 +167,15 @@ Este comando es similar a mkfile, pero no crea archivos, sino carpetas. El propi
 | -path       | Obligatorio | Este parámetro será la ruta de la carpeta que se creará. Si lleva espacios en blanco deberá encerrarse entre comillas.<br>Si no existen las carpetas padres, debe mostrar error, a menos que se utilice el parámetro -p, que se explica posteriormente.|
 | -p       | Obligatorio | Si se utiliza este parámetro y las carpetas padres en el parametro **path** no existen, entonces deben crearse. <br>Si ya existen, no realizara nada. No recibirá ningún valor, si lo recibe debe mostrar error.|
 
+#### 2. REN
+
+Este comando permitirá cambiar el nombre de un archivo o carpeta, si el usuario actualmente logueado tiene permiso de escritura sobre el archivo o carpeta. Tendrá los siguientes parámetros
+
+| Parámetro | Categoría   | Descripción                                                                                     |
+|-----------|-------------|-------------------------------------------------------------------------------------------------|
+| -path       | Obligatorio | Este parámetro será la ruta del archivo o carpeta al que se le cambiará el nombre. Si lleva espacios en blanco deberá encerrarse entre comillas. Si no existe el archivo o carpeta o no tiene permisos de escritura sobre la carpeta o archivo, debe mostrarse un mensaje de error|
+| -p       | Obligatorio | Especificara el nuevo nombre del archivo, debe verificar que no exista un archivo con el mismo nombre, de ser asi debe mostrar un mensaje de error|
+
 ### 📜 Script
 
 #### 1. EXEC

@@ -298,6 +298,41 @@ void adm_cap::ren(map<string, string> param_got, disco::User UserLoggedIn){
     int pos_bloque_encontrado = -1;
     string old_name = lista_path[lista_path.size() - 1];
     searchBlock(path_montura, &pos_inodo_padre, &pos_inodo_a_editar, &pos_bloque_encontrado, sp_user, &lista_path);
+    disco::Inode inodoPadre = getInodo(pos_inodo_a_editar, *sp_user, path_montura);
+
+    /*Inicio - Verificacion de Permisos*/
+    int id_propietario_inodo = inodoPadre.i_uid;
+    int id_grupo_inodo = inodoPadre.i_gid;
+    int permiso_padre_inodo = inodoPadre.i_perm;
+    int permiso_propietario_inodo = (permiso_padre_inodo / 100) % 100;
+    int permiso_grupo_inodo = (permiso_padre_inodo / 10) % 10;
+    int permiso_otro_inodo = permiso_padre_inodo % 10;
+    
+    //Se busca el grupo del usuario
+    string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
+    //Se busca el id del grupo en el user.txt
+    int id_grupo_UserLoggedIn = checkGroup(text, UserLoggedIn.grupo).id;
+    int id_propietario_UserLoggedIn = UserLoggedIn.id;
+    
+    //Se verifica que tipo de permiso posee
+    int tipo_permiso = -1;
+    if (id_propietario_inodo == UserLoggedIn.id){
+        tipo_permiso = permiso_propietario_inodo;
+    }else if(id_grupo_inodo == id_grupo_UserLoggedIn){
+        tipo_permiso = permiso_grupo_inodo;
+    }else {
+        tipo_permiso = permiso_otro_inodo;
+    }
+    //Se define todos los permisos para el usuario root
+    tipo_permiso = isRoot ? 7: tipo_permiso;
+    
+    if (!(tipo_permiso == 2 || tipo_permiso == 3 || tipo_permiso == 6 || tipo_permiso == 7)){
+        cout << csnt_cap.RED << "ERROR:" << csnt_cap.NC << " No se posee permisos de escritura " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
+        fclose(file);
+        return;
+    }
+    /*Final - Verificacion de Permisos*/
+
     editNameInBlockFolder(pos_bloque_encontrado, old_name, name, path_montura, *sp_user);
     cout << csnt_cap.GREEN << "RESPUESTA:" << csnt_cap.NC << " La carpeta ha sido creada correctamente " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
     fclose(file);
