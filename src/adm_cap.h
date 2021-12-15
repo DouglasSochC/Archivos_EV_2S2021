@@ -84,7 +84,7 @@ public:
     disco::Inode getInodo(int pos_inode, disco::Superblock spb, string path);
     /*
         Retorna una estructura de tipo Group con los datos de un grupo encontrado segun su nombre, 
-        este necesita del texto completo del archivo user.txt
+        este necesita del texto completo del archivo users.txt
     */
     disco::Group checkGroup(string user_txt, string nombre);
     /*
@@ -97,7 +97,7 @@ public:
     */
     void setContentByTypePointer(string tipo_puntero, int pos_block, string path, char estructura_a_modificar, disco::Superblock *spb, disco::Inode *inode_user, disco::Pointerblock *pointer_user, string *registro);
     /*
-        Retorna el texto completo que tiene el archivo user.txt
+        Retorna el texto completo que tiene el archivo users.txt
     */
     string getArchiveUserTXT(int part_start_partition, string path);
     /*

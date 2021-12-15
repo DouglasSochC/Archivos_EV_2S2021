@@ -113,7 +113,7 @@ void adm_ug::mkgrp(map<string, string> param_got, disco::User UserLoggedIn){
         return;
     }
 
-    //Se obtiene el inodo del user.txt
+    //Se obtiene el inodo del users.txt
     disco::Inode *inode_user = new disco::Inode();
     fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
     fread(inode_user, csnt_ug.SIZE_I, 1, file);
@@ -204,7 +204,7 @@ void adm_ug::rmgrp(map<string, string> param_got, disco::User UserLoggedIn){
         return;
     }
 
-    //Se obtiene el inodo del user.txt
+    //Se obtiene el inodo del users.txt
     disco::Inode *inode_user = new disco::Inode();
     fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
     fread(inode_user, csnt_ug.SIZE_I, 1, file);
@@ -279,7 +279,7 @@ void adm_ug::mkusr(map<string, string> param_got, disco::User UserLoggedIn){
         return;
     }
 
-    //Se obtiene el inodo del user.txt
+    //Se obtiene el inodo del users.txt
     disco::Inode *inode_user = new disco::Inode();
     fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
     fread(inode_user, csnt_ug.SIZE_I, 1, file);
@@ -377,7 +377,7 @@ void adm_ug::rmusr(map<string, string> param_got, disco::User UserLoggedIn){
         return;
     }
 
-    //Se obtiene el inodo del user.txt
+    //Se obtiene el inodo del users.txt
     disco::Inode *inode_user = new disco::Inode();
     fseek(file, sp_user->s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
     fread(inode_user, csnt_ug.SIZE_I, 1, file);
@@ -416,7 +416,7 @@ string adm_ug::getArchiveUserTXT(int part_start_partition, string path){
         return "";
     }
 
-    //Obtengo el inodo del user.txt debido a que se debe de leer por completo
+    //Obtengo el inodo del users.txt debido a que se debe de leer por completo
     disco::Inode inode_user;
     fseek(file, sp_user.s_inode_start + csnt_ug.SIZE_I, SEEK_SET);
     fread(&inode_user, csnt_ug.SIZE_I, 1, file);
@@ -826,7 +826,7 @@ void adm_ug::insertJournal(string contenido, char operacion, int permiso, disco:
     journal->id_journal = posicion + 1;
     journal->operation = operacion;
     journal->type = '1';
-    strcpy(journal->nombre, "user.txt");
+    strcpy(journal->nombre, "users.txt");
     journal->content = contenido;
     journal->date = time(nullptr);
     strcpy(journal->propietario, "root");

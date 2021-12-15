@@ -739,7 +739,7 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, disco::Mount partitionM
     fclose(format_partition);
     
     /*En la parte superior ya se realizo el formateo del sistema de archivo ahora en la parte 
-    inferior se agrega la carpeta root y se agrega un archivo llamado user.txt*/
+    inferior se agrega la carpeta root y se agrega un archivo llamado users.txt*/
     
     //Defino una variable que almacene las estructuras en el disco
     FILE *save_structs = fopen(partitionMount.path.c_str(), "rb+");
@@ -772,7 +772,7 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, disco::Mount partitionM
     strcpy(temp_folderblock.b_content[1].b_name, "..");
     temp_folderblock.b_content[1].b_inodo = 0;
     //Nombre del archivo que contiene la carpeta - Apunta al inodo del archivo
-    strcpy(temp_folderblock.b_content[2].b_name, "user.txt");
+    strcpy(temp_folderblock.b_content[2].b_name, "users.txt");
     temp_folderblock.b_content[2].b_inodo = 1;
     //Se almacena el primer bloque en el bitmap
     fseek(save_structs, superblock.s_bm_block_start, SEEK_SET);
@@ -781,9 +781,9 @@ void adm_discos::mkfs_EXT2(disco::Superblock superblock, disco::Mount partitionM
     fseek(save_structs, superblock.s_block_start, SEEK_SET);
     fwrite(&temp_folderblock, csnt_admdcs.SIZE_FB, 1, save_structs);
 
-    //Defino los datos predeterminados que posee el archivo user.txt
+    //Defino los datos predeterminados que posee el archivo users.txt
     string data = csnt_admdcs.USER_TXT;
-    //Se crea el segundo inodo el cual sera para el archivo user.txt
+    //Se crea el segundo inodo el cual sera para el archivo users.txt
     disco::Inode inode_archive;
     inode_archive.i_uid = 1;
     inode_archive.i_gid = 1;
@@ -873,7 +873,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     fclose(format_partition);
 
     /*En la parte superior ya se realizo el formateo del sistema de archivo ahora en la parte 
-    inferior se agrega la carpeta root y se agrega un archivo llamado user.txt*/
+    inferior se agrega la carpeta root y se agrega un archivo llamado users.txt*/
     
     //Defino una variable que almacene las estructuras en el disco
     FILE *save_structs = fopen(partitionMount.path.c_str(), "rb+");
@@ -906,7 +906,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     strcpy(temp_folderblock.b_content[1].b_name, "..");
     temp_folderblock.b_content[1].b_inodo = 0;
     //Nombre del archivo que contiene la carpeta - Apunta al inodo del archivo
-    strcpy(temp_folderblock.b_content[2].b_name, "user.txt");
+    strcpy(temp_folderblock.b_content[2].b_name, "users.txt");
     temp_folderblock.b_content[2].b_inodo = 1;
     //Se almacena el primer bloque en el bitmap
     fseek(save_structs, superblock.s_bm_block_start, SEEK_SET);
@@ -929,9 +929,9 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     fseek(save_structs, journaling_start, SEEK_SET);
     fwrite(journaling1, csnt_admdcs.SIZE_J, 1, save_structs);
 
-    //Defino los datos predeterminados que posee el archivo user.txt
+    //Defino los datos predeterminados que posee el archivo users.txt
     string data = csnt_admdcs.USER_TXT;
-    //Se crea el segundo inodo el cual sera para el archivo user.txt
+    //Se crea el segundo inodo el cual sera para el archivo users.txt
     disco::Inode inode_archive;
     inode_archive.i_uid = 1;
     inode_archive.i_gid = 1;
@@ -965,7 +965,7 @@ void adm_discos::mkfs_EXT3(disco::Superblock superblock, disco::Mount partitionM
     journaling2->id_journal = 2;
     journaling2->operation = 'C';
     journaling2->type = '1';
-    strcpy(journaling2->nombre, "user.txt");
+    strcpy(journaling2->nombre, "users.txt");
     journaling2->content = data;
     //strcpy(journaling2.content, data.c_str());
     journaling2->date = time(nullptr);

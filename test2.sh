@@ -74,13 +74,15 @@ unmount -id~:~vda3 #Desmonta
 
 #COMPROBACION DE ERRORES
 rmdisk -path~:~/tmp/douglas/Disco1.disk #No se puede eliminar el disco ya que esta montado
-fdisk -delete~:~fast -name~:~Part5 -path~:~/tmp/douglas/Disco1.disk -f~:~BF -size~:~1 #No se puede eliminar la particion ya que esta montado el disco
+#Error no existe el parametro -f
+fdisk -delete~:~fast -name~:~Part5 -path~:~/tmp/douglas/Disco1.disk -f~:~BF -size~:~1
 
 #GENERACION DE REPORTE MBR Y DISK
 rep -id~:~vda1 -path~:~/tmp/douglas/reportes/MBR_A1.jpg -name~:~mbr
-rep -id~:~vdB1 -path~:~/tmp/douglas/reportes/MBR_B1.jpg -name~:~mbr
+rep -id~:~vdb1 -path~:~/tmp/douglas/reportes/MBR_B1.jpg -name~:~mbr
 rep -id~:~vda2 -path~:~/tmp/douglas/reportes/DISK_A2.jpg -name~:~disk
 rep -id~:~vdb1 -path~:~/tmp/douglas/reportes/DISK_B1.jpg -name~:~disk
+rep -id~:~vdB1 -path~:~/tmp/douglas/reportes/MBR_B1.jpg -name~:~mbr #Error no existe el id solicitado
 rep -id~:~vda1 -path~:~/tmp/douglas/reportes/SB_A1.jpg -name~:~sb #Error debido a que no esta formateado 1
 rep -id~:~vdb1 -path~:~/tmp/douglas/reportes/SB_B1.jpg -name~:~sb #Error debido a que no esta formateado 2
 
@@ -99,8 +101,8 @@ rep -id~:~vdb1 -path~:~/tmp/douglas/reportes/BMBLOCK_B1.plain -name~:~bm_block
 #LOG IN Y LOG OUT
 logout #Error no hay una sesion activa
 login -usr~:~root -pwd~:~123 -id~:~vdb1 #Logueo Exitoso
-login -usr~:~"mi usuario" -pwd~:~"mi pwd" -id~:~vdb2 #Ya hay una sesion activa
-login -usr~:~root -pwd~:~123 -id~:~vda1 #Ya hay una sesion activa
+login -usr~:~"mi usuario" -pwd~:~"mi pwd" -id~:~vdb2 #Error - Ya hay una sesion activa
+login -usr~:~root -pwd~:~123 -id~:~vda1 #Error - Ya hay una sesion activa
 logout #Sesion cerrada correctamente
 login -usr~:~root -pwd~:~1234 -id~:~vda1 #Contraseña incorrecta
 login -usr~:~root -pwd~:~123 -id~:~vda1 #Logueo exitoso del root
@@ -116,10 +118,10 @@ mkgrp -name~:~"grupo22222" #Debe mostrar mensaje de error ya que el grupo ya exi
 
 #ELIMINACION DE GRUPOS
 rmgrp -name~:~grupo11111 #Elimina el grupo de usuarios en la partición de la sesión actual
-rmgrp -name~:~grupo11111 #Debe mostrar mensaje de error ya que el grupo no existe porque ya fue eliminado
+rmgrp -name~:~grupo11111 #Error ya que el grupo no existe porque ya fue eliminado
 mkgrp -name~:~"grupo11111" #Crea el grupo: grupo11111
 rmgrp -name~:~grupo11111 #Elimina el grupo de usuarios en la partición de la sesión actual
-rmgrp -name~:~grupo11111 #Debe mostrar mensaje de error ya que el grupo no existe porque ya fue eliminado
+rmgrp -name~:~grupo11111 #Error ya que el grupo no existe porque ya fue eliminado
 mkgrp -name~:~usuarios #Crea el grupo:usuarios
 
 #CREANDO USUARIOS
@@ -208,10 +210,10 @@ mkdir -path~:~/carpeta50 #Lo crea:carpeta50
 mkdir -path~:~/temp1/temp1 #Error - No existe la carpeta temp1 para crear la temp2
 mkdir -p -path~:~/temp1/temp2 #Lo crea
 mkdir -p -path~:~/temp/temp1/temp1 #Lo crea
-mkdir -p -path~:~/temp/temp1/temp1 #Error - Ya existe la carpeta temp2
+mkdir -p -path~:~/temp/temp1/temp1 #Error - Ya existe la carpeta temp1
 mkdir -p -path~:~/temp/temp1/temp3 #Lo crea
 mkdir -p -path~:~/temp/temp1/temp4 #Lo crea
-mkdir -p -path~:~/temp/temp1/temp1 #Lo crea
+mkdir -p -path~:~/temp/temp1/temp1 #Error -Ya existe la carpeta temp1
 
 #CREANDO USUARIOS NUEVOS
 Mkusr -usr~:~temporal1 -grp~:~usuarios -pwd~:~dato_nuevo #Crea al usuario:temporal1

@@ -132,14 +132,14 @@ public:
         string usuario = ""; // Nombre del usuario
         string contrasenia = ""; // Contrasenia del usuario
         Mount montura; //Montura
-        int posicion_registro = -1; // Es la posicion en la que se encuentra ubicado el registro dentro del archivo user.txt
+        int posicion_registro = -1; // Es la posicion en la que se encuentra ubicado el registro dentro del archivo users.txt
         int tamanio_registro = -1; //Es el tamanio del registro encontrado
     } User;
 
     typedef struct {
         int id = -1; // -1 = Sin uso; 0 = Eliminado; >0 = Id activo
         string nombre = ""; // Nombre del grupo
-        int posicion_registro = -1; // Es la posicion en la que se encuentra ubicado el registro dentro del archivo user.txt
+        int posicion_registro = -1; // Es la posicion en la que se encuentra ubicado el registro dentro del archivo users.txt
         int tamanio_registro = -1; //Es el tamanio del registro encontrado
     } Group;
 

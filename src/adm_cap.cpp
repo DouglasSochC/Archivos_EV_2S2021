@@ -130,7 +130,7 @@ void adm_cap::mkdir(map<string, string> param_got, disco::User UserLoggedIn){
         
         //Se busca el grupo del usuario
         string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
-        //Se busca el id del grupo en el user.txt
+        //Se busca el id del grupo en el users.txt
         int id_grupo_UserLoggedIn = checkGroup(text, UserLoggedIn.grupo).id;
         int id_propietario_UserLoggedIn = UserLoggedIn.id;
         
@@ -312,7 +312,7 @@ void adm_cap::ren(map<string, string> param_got, disco::User UserLoggedIn){
     
     //Se busca el grupo del usuario
     string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
-    //Se busca el id del grupo en el user.txt
+    //Se busca el id del grupo en el users.txt
     int id_grupo_UserLoggedIn = checkGroup(text, UserLoggedIn.grupo).id;
     int id_propietario_UserLoggedIn = UserLoggedIn.id;
     
@@ -439,7 +439,7 @@ void adm_cap::cat(map<string, string> param_got, disco::User UserLoggedIn){
     
     //Se busca el grupo del usuario
     string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
-    //Se busca el id del grupo en el user.txt
+    //Se busca el id del grupo en el users.txt
     int id_grupo_UserLoggedIn = checkGroup(text, UserLoggedIn.grupo).id;
     int id_propietario_UserLoggedIn = UserLoggedIn.id;
     
@@ -594,7 +594,7 @@ void adm_cap::mkfile(map<string, string> param_got, disco::User UserLoggedIn){
         
         //Se busca el grupo del usuario
         string text = getArchiveUserTXT(actualMount.part_start, actualMount.path);
-        //Se busca el id del grupo en el user.txt
+        //Se busca el id del grupo en el users.txt
         int id_grupo_UserLoggedIn = checkGroup(text, UserLoggedIn.grupo).id;
         int id_propietario_UserLoggedIn = UserLoggedIn.id;
         
@@ -1789,7 +1789,7 @@ string adm_cap::getArchiveUserTXT(int part_start_partition, string path){
         return "";
     }
 
-    //Obtengo el inodo del user.txt debido a que se debe de leer por completo
+    //Obtengo el inodo del users.txt debido a que se debe de leer por completo
     disco::Inode inode_user;
     fseek(file, sp_user.s_inode_start + csnt_cap.SIZE_I, SEEK_SET);
     fread(&inode_user, csnt_cap.SIZE_I, 1, file);
