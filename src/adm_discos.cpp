@@ -230,8 +230,10 @@ void adm_discos::mount(map<string, string> param_got){
         size_partition = tempPartition.part_size - csnt_admdcs.SIZE_EBR;
     }else if(foundName == 'E'){
         cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No se puede montar una particion extendida " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
     }else{
         cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " No existe la particion que desea montar " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
     }
     
     disco::Mount newMount = partitionToMounted(name, path, foundName, part_start_partition, size_partition);
@@ -240,6 +242,7 @@ void adm_discos::mount(map<string, string> param_got){
         cout << csnt_admdcs.GREEN << "RESPUESTA:" << csnt_admdcs.NC << " La particion ha sido montada correctamente y se le ha asignado el siguiente id:\e[1m" << newMount.id << "\e[0m" << " "  << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
     }else{
         cout << csnt_admdcs.RED << "ERROR:" << csnt_admdcs.NC << " Ya esta montada la particion " << name << " " << csnt_admdcs.BLUE << comentario << csnt_admdcs.NC << endl;
+        return;
     }
 }
 
