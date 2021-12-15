@@ -574,7 +574,7 @@ void adm_cap::mkfile(map<string, string> param_got, disco::User UserLoggedIn){
         return;
     }
 
-    bool response_folder = false;
+    bool response_folder = (diferencia == 1)? true: false;
     bool response_archive = false;
     for (int i = diagonal; i < path_niveles.size(); i++){
         //Archivos y Carpetas no Encontrados
@@ -632,19 +632,21 @@ void adm_cap::mkfile(map<string, string> param_got, disco::User UserLoggedIn){
             fwrite(sp_user, csnt_cap.SIZE_SPB, 1, file);
             response_folder = true;
         }else if (encontro_puntero_disponible && typeText(nombre_inodo_nuevo) == 'A'){
-            //El posicion nuevo inodo a insertar es el inodo que debo modificar
-            /*Aqui se dependera de dos situaciones:
-            1. La situacion en donde se crea y se llena
-            2. Solo se crea con N cantidad de bloques de tipo archivo hay que tomar en cuenta
-            que cada bloque solo acepta 13 caracteres*/
-            editInodeArchive(pos_nuevo_inodo_a_insertar, pos_inodo_a_editar, path_montura, id_propietario_UserLoggedIn, id_grupo_UserLoggedIn, sp_user);
-            createNewArchive(contenidoCont, size, pos_nuevo_inodo_a_insertar, path_montura, sp_user);
-            //Se actualiza el superbloque debido a que pudo tener cambios mientras se ingresaba algun registro
-            fseek(file, actualMount.part_start, SEEK_SET);
-            fwrite(sp_user, csnt_cap.SIZE_SPB, 1, file);
-            response_archive = true;
-        }else{
-            response_folder = false;
+            if (response_folder){
+                /*Aqui se dependera de dos situaciones:
+                1. La situacion en donde se crea y se llena
+                2. Solo se crea con N cantidad de bloques de tipo archivo hay que tomar en cuenta
+                que cada bloque solo acepta 13 caracteres*/
+                editInodeArchive(pos_nuevo_inodo_a_insertar, pos_inodo_a_editar, path_montura, id_propietario_UserLoggedIn, id_grupo_UserLoggedIn, sp_user);
+                createNewArchive(contenidoCont, size, pos_nuevo_inodo_a_insertar, path_montura, sp_user);
+                if (sp_user->s_filesystem_type == 3){
+                    insertJournal(contenidoCont, 'C', 0, '1', nombre_inodo_nuevo, UserLoggedIn.usuario, actualMount, *sp_user);
+                }
+                //Se actualiza el superbloque debido a que pudo tener cambios mientras se ingresaba algun registro
+                fseek(file, actualMount.part_start, SEEK_SET);
+                fwrite(sp_user, csnt_cap.SIZE_SPB, 1, file);
+                response_archive = true;
+            }
         }
     }
     
@@ -656,14 +658,10 @@ void adm_cap::mkfile(map<string, string> param_got, disco::User UserLoggedIn){
     
     if(response_folder && !response_archive){
         cout << csnt_cap.YELLOW << "AVISO:" << csnt_cap.NC << " El path de carpetas fue creado correctamente sin embargo no se pudo crear el archivo " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
-    }else if(!response_folder && response_archive){
-
     }else if (response_folder && response_archive){
         cout << csnt_cap.GREEN << "RESPUESTA:" << csnt_cap.NC << " El archivo ha sido creado correctamente " << csnt_cap.BLUE << comentario << csnt_cap.NC << endl;
     }
-
     fclose(file);
-
 }
 
 string adm_cap::getTextCont(string path){
@@ -1048,30 +1046,34 @@ void adm_cap::createNewArchive(string contenido, int size, int pos_inodo_a_modif
 
     //Realiza el llenado solo con bloques
     if (contenido.empty()){
-        int cantidad_bloques = floor(size/13);
+        int cantidad_bloques = floor(size/63);
         //Apuntadores del 1 al 12
         for (int i = 0; i < 12; i++){
-            if (inodo.i_block[i] == -1){
-                //setContentByTypePointer("BD", inode_user->i_block[i], mount_temp.path, 'I', spb, inode_user, NULL, registro);
+            if (inodo.i_block[i] == -1 && cantidad_bloques > 0){
+                addArchivesBlocks("BD", inodo.i_block[i], path, 'I', spb, &inodo, NULL, &cantidad_bloques);
             }
         }
 
         //Apuntador 13 - Se apunta a una estructura de apuntadores
-        if (inodo.i_block[12] == -1){
-            //setContentByTypePointer("BSI", inode_user->i_block[12], mount_temp.path, 'I', spb, inode_user, NULL, registro);
+        if (inodo.i_block[12] == -1 && cantidad_bloques > 0){
+            addArchivesBlocks("BSI", inodo.i_block[12], path, 'I', spb, &inodo, NULL, &cantidad_bloques);
         }
 
         //Apuntador 14 - Se apunta a una estructura de apuntadores
-        if (inodo.i_block[13] == -1){
-            //setContentByTypePointer("BDI", inode_user->i_block[13], mount_temp.path, 'I', spb, inode_user, NULL, registro);
+        if (inodo.i_block[13] == -1 && cantidad_bloques > 0){
+            addArchivesBlocks("BDI", inodo.i_block[13], path, 'I', spb, &inodo, NULL, &cantidad_bloques);
         }
 
         //Apuntador 15 - Se apunta a una estructura de apuntadores
-        if (inodo.i_block[14] == -1){
-            //setContentByTypePointer("BTI", inode_user->i_block[14], mount_temp.path, '\0', spb, inode_user, NULL, registro);
+        if (inodo.i_block[14] == -1 && cantidad_bloques > 0){
+            addArchivesBlocks("BTI", inodo.i_block[14], path, '\0', spb, &inodo, NULL, &cantidad_bloques);
         }
-
-        //Se realiza nuevamente el guardado del inodo con los punteros ya asignados
+        //Se actualiza el inodo debido a que pudo tener cambios mientras se ingresaba algun registro
+        fseek(file, spb->s_inode_start + (pos_inodo_a_modificar * csnt_cap.SIZE_I), SEEK_SET);
+        fwrite(&inodo, csnt_cap.SIZE_I, 1, file);
+        if (cantidad_bloques > 0){
+            cout << csnt_cap.YELLOW << "AVISO:" << csnt_cap.NC << " No hay espacio para ingresar mas bloques la cantidad sobrante de bytes es de " << 63*cantidad_bloques << endl;
+        }        
     }
     //Realiza el llenado con datos
     else{
@@ -1516,156 +1518,152 @@ void adm_cap::searchBlock(string path, int *pos_padre, int *pos_inodo, int*pos_b
     fclose(file);
 }
 
-void adm_cap::addDataInInode(disco::Inode inodo, string path, disco::Superblock *spb){
-    cout << "hola" << endl;
-}
-
-void adm_cap::addArchivesBlocks(string tipo_puntero, string path, disco::Superblock *spb, disco::Inode *inodo, int *cantidad_bloques_faltantes){
-    
-    // FILE *file = fopen(path.c_str(), "rb+");
-    // if (tipo_puntero == "BD"){
-    //     /*
-    //         Se necesita como minimo 1 bloque
-    //         Bloque1 = Es un bloque de archivo
-    //     */
-    //     if (spb->s_free_blocks_count > 0){
-    //         //Se obtiene la posicion de un bloque vacio
-    //         int new_block_position = spb->s_first_blo;
-    //         //Se hace una comparacion sobre que tipo de estructura va a modificar algunos de sus punteros
-    //         for (int i = 0; i < 12; i++){
-    //             //Se modifica un puntero vacio del inodo
-    //             if (inodo->i_block[i] == -1){
-    //                 inodo->i_block[i] = new_block_position;
-    //                 break;
-    //             }
-    //         }            
-    //         //Se setea un 1 en la nueva posicion ya que va a ser ocupada
-    //         setPositionBMBlock(new_block_position, path, *spb);
-    //         //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
-    //         spb->s_first_blo = getPositionBMBlock(*spb, path);
-    //         //Se modifica la cantidad de bloques libres
-    //         spb->s_free_blocks_count -= 1;
-    //         //Se resta la cantidad de bloques faltantes
-    //         *cantidad_bloques_faltantes -= 1;
-    //     }
-    // }else if (tipo_puntero == "BSI"){
-    //     /*
-    //         Se necesita como minimo 2 bloques
-    //         Bloque1 = Bloque de apuntador 1 en donde su primer apuntador apunta al Bloque1
-    //         Bloque3 = Bloque de archivo
-    //     */
-    //     if (spb->s_free_blocks_count > 1){
-    //         //Se obtiene la posicion de un bloque vacio
-    //         int new_block_position = spb->s_first_blo;
-    //         //Se modifica el puntero numero 14 del inodo_user
-    //         inodo->i_block[12] = new_block_position;
-    //         //Se setea un 1 en la nueva posicion ya que va a ser ocupada
-    //         setPositionBMBlock(new_block_position, path, *spb);
-    //         //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
-    //         spb->s_first_blo = getPositionBMBlock(*spb, path);
-    //         //Se modifica la cantidad de bloques libres
-    //         spb->s_free_blocks_count -= 1;
-    //         //Se resta la cantidad de bloques faltantes
-    //         *cantidad_bloques_faltantes -= 1;
-    //         //Se crea un nuevo bloque de tipo puntero
-    //         //createPointerBlock(new_block_position, path, *spb);
-    //     }else if(pos_block != -1 && spb->s_free_blocks_count > 0){
-    //         disco::Pointerblock *pointer_bsi = new disco::Pointerblock();
-    //         fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
-    //         fread(pointer_bsi, csnt_ug.SIZE_PB, 1, file);
-    //         for (int i = 0; i < 15; i++){
-    //             if (registro->size() > 0){
-    //                 setContentByTypePointer("BD", pointer_bsi->b_pointers[i], path, 'P', spb, inode_user, pointer_bsi, registro);
-    //             }
-    //         }
-    //         //Se almacenan los cambios que halla pasado el bloque de tipo apuntador
-    //         fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
-    //         fwrite(pointer_bsi, csnt_ug.SIZE_PB, 1, file);
-    //     }
-    // }else if (tipo_puntero == "BDI"){
-    //     /*
-    //     Se necesita como minimo 3 bloques
-    //     Bloque1 = Bloque de apuntador 1 en donde su primer apuntador apunta al Bloque2
-    //     Bloque2 = Bloque de apuntador 2 en donde su primer apuntador apunta al Bloque3
-    //     Bloque3 = Bloque de archivo
-    //     */
-    //     if (pos_block == -1 && spb->s_free_blocks_count > 0){
-    //         //Se obtiene la posicion de un bloque vacio
-    //         int new_block_position = spb->s_first_blo;
-    //         //Se hace una comparacion sobre que tipo de estructura va a modificar algunos de sus punteros
-    //         if (estructura_a_modificar == 'P'){
-    //             //Se modifica un puntero vacio del bloque de apuntadores
-    //             for (int i = 0; i < 15; i++){
-    //                 if (pointer_user->b_pointers[i] == -1){
-    //                     pointer_user->b_pointers[i] = new_block_position;
-    //                     break;
-    //                 }
-    //             }
-    //         }else if(estructura_a_modificar == 'I'){
-    //             //Se modifica el puntero numero 14 del inodo_user
-    //             inode_user->i_block[13] = new_block_position;
-    //         }
-    //         //Se setea un 1 en la nueva posicion ya que va a ser ocupada
-    //         setPositionBMBlock(new_block_position, path, *spb);
-    //         //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
-    //         spb->s_first_blo = getPositionBMBlock(*spb, path);
-    //         //Se modifica la cantidad de bloques libres
-    //         spb->s_free_blocks_count -= 1;
-    //         //Se crea un nuevo bloque de tipo puntero
-    //         createPointerBlock(new_block_position, path, *spb);
-    //         //Entra al mismo ciclo con la nueva posicion
-    //         setContentByTypePointer("BDI", new_block_position, path, '\0', spb, inode_user, NULL, registro);
-    //     }else if(pos_block != -1 && spb->s_free_blocks_count > 0){
-    //         disco::Pointerblock *pointer_bdi = new disco::Pointerblock();
-    //         fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
-    //         fread(pointer_bdi, csnt_ug.SIZE_PB, 1, file);
-    //         for (int i = 0; i < 15; i++){
-    //             if (registro->size() > 0){
-    //                 setContentByTypePointer("BSI", pointer_bdi->b_pointers[i], path, 'P', spb, inode_user, pointer_bdi, registro);
-    //             }
-    //         }
-    //         //Se almacenan los cambios que halla pasado el bloque de tipo apuntador
-    //         fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
-    //         fwrite(pointer_bdi, csnt_ug.SIZE_PB, 1, file);
-    //     }
-    // }else if (tipo_puntero == "BTI"){
-    //     /*
-    //     Se necesita como minimo 4 bloques
-    //     Bloque1 = Bloque de apuntador 1 en donde su primer apuntador apunta al Bloque2
-    //     Bloque2 = Bloque de apuntador 2 en donde su primer apuntador apunta al Bloque3
-    //     Bloque3 = Bloque de apuntador 3 en donde su primer apuntador apunta al Bloque4
-    //     Bloque4 = Bloque de archivo
-    //     */
-    //     if (pos_block == -1 && spb->s_free_blocks_count > 0){
-    //         //Se obtiene la posicion de un bloque vacio
-    //         int new_block_position = spb->s_first_blo;
-    //         //Se modifica el puntero numero 15 del inodo_user
-    //         inode_user->i_block[14] = new_block_position;
-    //         //Se setea un 1 en la nueva posicion ya que va a ser ocupada
-    //         setPositionBMBlock(new_block_position, path, *spb);
-    //         //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
-    //         spb->s_first_blo = getPositionBMBlock(*spb, path);
-    //         //Se modifica la cantidad de bloques libres
-    //         spb->s_free_blocks_count -= 1;
-    //         //Se crea un nuevo bloque de tipo puntero
-    //         createPointerBlock(new_block_position, path, *spb);
-    //         //Entra al mismo ciclo con la nueva posicion
-    //         setContentByTypePointer("BTI", new_block_position, path, '\0', spb, inode_user, NULL, registro);
-    //     }else if(pos_block != -1 && spb->s_free_blocks_count > 0){
-    //         disco::Pointerblock *pointer_bti = new disco::Pointerblock();
-    //         fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
-    //         fread(pointer_bti, csnt_ug.SIZE_PB, 1, file);
-    //         for (int i = 0; i < 15; i++){
-    //             if (registro->size() > 0){
-    //                 setContentByTypePointer("BDI", pointer_bti->b_pointers[i], path, 'P', spb, inode_user, pointer_bti, registro);
-    //             }
-    //         }
-    //         //Se almacenan los cambios que halla pasado el bloque de tipo apuntador
-    //         fseek(file, spb->s_block_start + (pos_block * csnt_ug.SIZE_PB), SEEK_SET);
-    //         fwrite(pointer_bti, csnt_ug.SIZE_PB, 1, file);
-    //     }
-    // }
-    // fclose(file);
+void adm_cap::addArchivesBlocks(string tipo_puntero, int pos_block, string path, char estructura_a_modificar, disco::Superblock *spb, disco::Inode *inode_user, disco::Pointerblock *pointer_user, int *cantidad_bloques){
+    FILE *file = fopen(path.c_str(), "rb+");
+    if (tipo_puntero == "BD"){        
+        if (pos_block == -1 && spb->s_free_blocks_count > 0){
+            //Se obtiene la posicion de un bloque vacio
+            int new_block_position = spb->s_first_blo;
+            //Se hace una comparacion sobre que tipo de estructura va a modificar algunos de sus punteros
+            if (estructura_a_modificar == 'P'){
+                //Se modifica un puntero vacio del bloque de apuntadores
+                for (int i = 0; i < 15; i++){
+                    if (pointer_user->b_pointers[i] == -1){
+                        pointer_user->b_pointers[i] = new_block_position;
+                        break;
+                    }
+                }
+            }else if(estructura_a_modificar == 'I'){
+                for (int i = 0; i < 12; i++){
+                    //Se modifica un puntero vacio del inodo
+                    if (inode_user->i_block[i] == -1){
+                        inode_user->i_block[i] = new_block_position;
+                        break;
+                    }
+                }
+            }
+            //Se setea un 1 en la nueva posicion ya que va a ser ocupada
+            setPositionBMBlock(new_block_position, path, *spb);
+            //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
+            spb->s_first_blo = getPositionBMBlock(*spb, path);
+            //Se crea un nuevo bloque de tipo puntero
+            createArchiveBlock(new_block_position, path, *spb);
+            //Se modifica la cantidad de bloques libres
+            spb->s_free_blocks_count -= 1;
+            //Se modifica la cantidad de bloques a ingresar
+            *cantidad_bloques -= 1;
+        }
+    }else if (tipo_puntero == "BSI"){
+        if (pos_block == -1 && spb->s_free_blocks_count > 1){
+            //Se obtiene la posicion de un bloque vacio
+            int new_block_position = spb->s_first_blo;
+            //Se hace una comparacion sobre que tipo de estructura va a modificar algunos de sus punteros
+            if (estructura_a_modificar == 'P'){
+                //Se modifica un puntero vacio del bloque de apuntadores
+                for (int i = 0; i < 15; i++){
+                    if (pointer_user->b_pointers[i] == -1){
+                        pointer_user->b_pointers[i] = new_block_position;
+                        break;
+                    }
+                }
+            }else if(estructura_a_modificar == 'I'){
+                //Se modifica el puntero numero 14 del inodo_user
+                inode_user->i_block[12] = new_block_position;
+            }
+            //Se setea un 1 en la nueva posicion ya que va a ser ocupada
+            setPositionBMBlock(new_block_position, path, *spb);
+            //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
+            spb->s_first_blo = getPositionBMBlock(*spb, path);
+            //Se modifica la cantidad de bloques libres
+            spb->s_free_blocks_count -= 1;
+            //Se crea un nuevo bloque de tipo puntero
+            createPointerBlock(new_block_position, path, *spb);
+            //Entra al mismo ciclo con la nueva posicion
+            addArchivesBlocks("BSI", new_block_position, path, '\0', spb, inode_user, NULL, cantidad_bloques);
+        }else if(pos_block != -1 && spb->s_free_blocks_count > 1){
+            disco::Pointerblock *pointer_bsi = new disco::Pointerblock();
+            fseek(file, spb->s_block_start + (pos_block * csnt_cap.SIZE_PB), SEEK_SET);
+            fread(pointer_bsi, csnt_cap.SIZE_PB, 1, file);
+            for (int i = 0; i < 15; i++){
+                if (*cantidad_bloques > 0){
+                    addArchivesBlocks("BD", pointer_bsi->b_pointers[i], path, 'P', spb, inode_user, pointer_bsi, cantidad_bloques);
+                }
+            }
+            //Se almacenan los cambios que halla pasado el bloque de tipo apuntador
+            fseek(file, spb->s_block_start + (pos_block * csnt_cap.SIZE_PB), SEEK_SET);
+            fwrite(pointer_bsi, csnt_cap.SIZE_PB, 1, file);
+        }
+    }else if (tipo_puntero == "BDI"){
+        if (pos_block == -1 && spb->s_free_blocks_count > 0){
+            //Se obtiene la posicion de un bloque vacio
+            int new_block_position = spb->s_first_blo;
+            //Se hace una comparacion sobre que tipo de estructura va a modificar algunos de sus punteros
+            if (estructura_a_modificar == 'P'){
+                //Se modifica un puntero vacio del bloque de apuntadores
+                for (int i = 0; i < 15; i++){
+                    if (pointer_user->b_pointers[i] == -1){
+                        pointer_user->b_pointers[i] = new_block_position;
+                        break;
+                    }
+                }
+            }else if(estructura_a_modificar == 'I'){
+                //Se modifica el puntero numero 14 del inodo_user
+                inode_user->i_block[13] = new_block_position;
+            }
+            //Se setea un 1 en la nueva posicion ya que va a ser ocupada
+            setPositionBMBlock(new_block_position, path, *spb);
+            //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
+            spb->s_first_blo = getPositionBMBlock(*spb, path);
+            //Se modifica la cantidad de bloques libres
+            spb->s_free_blocks_count -= 1;
+            //Se crea un nuevo bloque de tipo puntero
+            createPointerBlock(new_block_position, path, *spb);
+            //Entra al mismo ciclo con la nueva posicion
+            addArchivesBlocks("BDI", new_block_position, path, '\0', spb, inode_user, NULL, cantidad_bloques);
+        }else if(pos_block != -1 && spb->s_free_blocks_count > 0){
+            disco::Pointerblock *pointer_bdi = new disco::Pointerblock();
+            fseek(file, spb->s_block_start + (pos_block * csnt_cap.SIZE_PB), SEEK_SET);
+            fread(pointer_bdi, csnt_cap.SIZE_PB, 1, file);
+            for (int i = 0; i < 15; i++){
+                if (*cantidad_bloques > 0){
+                    addArchivesBlocks("BSI", pointer_bdi->b_pointers[i], path, 'P', spb, inode_user, pointer_bdi, cantidad_bloques);
+                }
+            }
+            //Se almacenan los cambios que halla pasado el bloque de tipo apuntador
+            fseek(file, spb->s_block_start + (pos_block * csnt_cap.SIZE_PB), SEEK_SET);
+            fwrite(pointer_bdi, csnt_cap.SIZE_PB, 1, file);
+        }
+    }else if (tipo_puntero == "BTI"){
+        if (pos_block == -1 && spb->s_free_blocks_count > 0){
+            //Se obtiene la posicion de un bloque vacio
+            int new_block_position = spb->s_first_blo;
+            //Se modifica el puntero numero 15 del inodo_user
+            inode_user->i_block[14] = new_block_position;
+            //Se setea un 1 en la nueva posicion ya que va a ser ocupada
+            setPositionBMBlock(new_block_position, path, *spb);
+            //Se encuentra una nueva posicion de un bloque vacio y se le asigna al superbloque
+            spb->s_first_blo = getPositionBMBlock(*spb, path);
+            //Se modifica la cantidad de bloques libres
+            spb->s_free_blocks_count -= 1;
+            //Se crea un nuevo bloque de tipo puntero
+            createPointerBlock(new_block_position, path, *spb);
+            //Entra al mismo ciclo con la nueva posicion
+            addArchivesBlocks("BTI", new_block_position, path, '\0', spb, inode_user, NULL, cantidad_bloques);
+        }else if(pos_block != -1 && spb->s_free_blocks_count > 0){
+            disco::Pointerblock *pointer_bti = new disco::Pointerblock();
+            fseek(file, spb->s_block_start + (pos_block * csnt_cap.SIZE_PB), SEEK_SET);
+            fread(pointer_bti, csnt_cap.SIZE_PB, 1, file);
+            for (int i = 0; i < 15; i++){
+                if (*cantidad_bloques > 0){
+                    addArchivesBlocks("BDI", pointer_bti->b_pointers[i], path, 'P', spb, inode_user, pointer_bti, cantidad_bloques);
+                }
+            }
+            //Se almacenan los cambios que halla pasado el bloque de tipo apuntador
+            fseek(file, spb->s_block_start + (pos_block * csnt_cap.SIZE_PB), SEEK_SET);
+            fwrite(pointer_bti, csnt_cap.SIZE_PB, 1, file);
+        }
+    }
+    fclose(file);
 }
 
 disco::Inode adm_cap::getInodo(int pos_inode, disco::Superblock spb, string path){

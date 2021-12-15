@@ -141,14 +141,9 @@ public:
     */
     string vectorToString(vector<string> path);
     /*
-        Este metodo se encarga de llenar con datos el inodo de tipo archivo, este depende
-        del texto obtenido en el parametro -CONT
-    */
-    void addDataInInode(disco::Inode inodo, string path, disco::Superblock *spb);
-    /*
         Este metodo se encarga de llenar con bloques el inodo de tipo archivo
     */    
-    void addArchivesBlocks(string tipo_puntero, string path, disco::Superblock *spb, disco::Inode *inodo, int *cantidad_bloques_faltantes);
+    void addArchivesBlocks(string tipo_puntero, int pos_block, string path, char estructura_a_modificar, disco::Superblock *spb, disco::Inode *inode_user, disco::Pointerblock *pointer_user, int *cantidad_bloques);
     /*
         Este metodo se encarga de crear un bloque de tipo apuntador
     */
