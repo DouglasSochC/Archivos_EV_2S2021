@@ -15,6 +15,12 @@ public:
     void ren(map<string, string> param_got, disco::User UserLoggedIn);
     void cat(map<string, string> param_got, disco::User UserLoggedIn);
     void mkfile(map<string, string> param_got, disco::User UserLoggedIn);
+    
+    /*
+        Este metodo se encarga de retornar el texto de un archivo segun el path ingresado, si el 
+        path es incorrecto no retornara nada
+    */
+    string getTextCont(string path);
     /*
         Este metodo se encarga de buscar y encontrar un path dentro de un inodo, sin embargo el path a 
         buscar debe de venir en forma de lista, conforme va hallando el nombre de la carpeta o archivo, 
@@ -60,6 +66,18 @@ public:
     */
     void createNewFolder(int pos_nuevo_inodo_a_insertar, int pos_padre_del_inodo_a_insertar, string path, int pos_bloque_nuevo_a_insertar, int id_propietario_carpeta_nueva, int id_grupo_carpeta_nueva, disco::Superblock *spb);
     /*
+        Se encarga de diferenciar que tipo de edicion se realizara en el inodo de tipo archivo.
+        Tipos de edicion:
+        1. Se crea los bloques de tipo carpeta con la diferencia de que estos estan vacios
+        2. Se crea los bloques de tipo carpeta pero con informacion dada por el usuario
+    */
+    void createNewArchive(string contenido, int size, int pos_inodo_a_modificar, string path, disco::Superblock *spb);
+    /*
+        Este metodo se encarga de modificar el inodo encargado de enlazar los bloques de 
+        tipo carpeta
+    */
+    void editInodeArchive(int pos_inodo_a_editar, int pos_padre_del_inodo_a_modificar, string path, int id_propietario_carpeta_nueva, int id_grupo_carpeta_nueva, disco::Superblock *spb);
+    /*
         Se obtiene la estructura de un inodo, dependiendo de la posicion que se le asigne
         a traves del parametro 'pos_inode'
     */
@@ -74,6 +92,10 @@ public:
         busqueda dependiendo del tipo de puntero que se ha escogido
     */
     void getContentByTypePointer(string *contenido, string tipo_apuntador, string path, disco::Superblock spb, int pos_block);
+    /*
+        Este metodo se encarga de ingresar datos dentro de un inodo de tipo archivo
+    */
+    void setContentByTypePointer(string tipo_puntero, int pos_block, string path, char estructura_a_modificar, disco::Superblock *spb, disco::Inode *inode_user, disco::Pointerblock *pointer_user, string *registro);
     /*
         Retorna el texto completo que tiene el archivo user.txt
     */
@@ -118,6 +140,23 @@ public:
         Este retorna el valor completo de un vector del path
     */
     string vectorToString(vector<string> path);
+    /*
+        Este metodo se encarga de llenar con datos el inodo de tipo archivo, este depende
+        del texto obtenido en el parametro -CONT
+    */
+    void addDataInInode(disco::Inode inodo, string path, disco::Superblock *spb);
+    /*
+        Este metodo se encarga de llenar con bloques el inodo de tipo archivo
+    */    
+    void addArchivesBlocks(string tipo_puntero, string path, disco::Superblock *spb, disco::Inode *inodo, int *cantidad_bloques_faltantes);
+    /*
+        Este metodo se encarga de crear un bloque de tipo apuntador
+    */
+    void createPointerBlock(int position, string path, disco::Superblock spb);
+    /*
+        Este metodo se encarga de crear un bloque de tipo archivo
+    */
+    void createArchiveBlock(int position, string path, disco::Superblock spb);
 };
 
 #endif //ADM_CAP_H

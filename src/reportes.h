@@ -20,7 +20,7 @@ public:
     void bm_block(map<string, string> param_got, vector<disco::Mount> list_mount);
     disco::Mount getMount(string id, vector<disco::Mount> list_mount);
     void tree(map<string, string> param_got, vector<disco::Mount> list_mount);    
-    void drawInode(disco::Inode inodo, string path, string estructura_inicial, bool isInodeInit, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb);
+    void drawInode(disco::Inode inodo, string path, string estructura_inicial, bool isInodeInit, int encabezado_inodo, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb);
     void drawFolderBlock(disco::Folderblock carpeta, string path, string estructura_inicial, bool isInodeInit, int encabezado_bloque, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb);
     void drawArchiveBlock(disco::Archiveblock archivo, string path, string estructura_inicial, bool isInodeInit, int encabezado_bloque, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb);
     void drawPointerBlock(disco::Pointerblock apuntador, string path, string estructura_inicial, bool isInodeInit, int encabezado_bloque, string tipo_apuntador, char tipo_inodo, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb);

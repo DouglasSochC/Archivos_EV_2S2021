@@ -811,7 +811,8 @@ void reportes::tree(map<string, string> param_got, vector<disco::Mount> list_mou
     string relations = "";
     int contador_inodo = 0;
     int contador_bloque = 0;
-    drawInode(inodo_inicial, path_aux, "", true, &contador_inodo, &contador_bloque, &draw, &relations, &spb);
+    int encabezado_inodo = 0;
+    drawInode(inodo_inicial, path_aux, "", true, encabezado_inodo, &contador_inodo, &contador_bloque, &draw, &relations, &spb);
     draw += relations + "\n";
     draw += "}";
 
@@ -819,7 +820,7 @@ void reportes::tree(map<string, string> param_got, vector<disco::Mount> list_mou
     cout << csnt_rp.GREEN << "RESPUESTA:" << csnt_rp.NC << " El reporte TREE ha sido generado correctamente " << csnt_rp.BLUE << comentario << csnt_rp.NC << endl;
 }
 
-void reportes::drawInode(disco::Inode inodo, string path, string estructura_inicial, bool isInodeInit, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
+void reportes::drawInode(disco::Inode inodo, string path, string estructura_inicial, bool isInodeInit, int encabezado_inodo, int *contador_inodo, int *contador_bloque, string *draw, string *relations, disco::Superblock *spb){
     
     vector<Punteros_aux> listado_punteros;
     int cantidad_punteros_utilizados = 0;
@@ -834,7 +835,7 @@ void reportes::drawInode(disco::Inode inodo, string path, string estructura_inic
     *draw += nombre_estructura+" [label=<\n"
     "<TABLE border='0' cellborder='1' cellspacing='0'>\n"
     "<TR>\n"
-        "<TD COLSPAN='3' BGCOLOR = '"+ csnt_rp.COLOR_INODE +"'>INODO " + to_string(*contador_inodo) + "</TD>\n"
+        "<TD COLSPAN='3' BGCOLOR = '"+ csnt_rp.COLOR_INODE +"'>INODO " + to_string(encabezado_inodo) + "</TD>\n"
     "</TR>\n";
     if (!isInodeInit){
         *relations += estructura_inicial + "->" + nombre_estructura + "\n";
@@ -1022,7 +1023,7 @@ void reportes::drawFolderBlock(disco::Folderblock carpeta, string path, string e
             fseek(file_folder, spb->s_inode_start + (posicion_inodo * csnt_rp.SIZE_I), SEEK_SET);
             fread(&tempInodo, csnt_rp.SIZE_I, 1, file_folder);
             //Dibuja Inodo
-            drawInode(tempInodo, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, contador_inodo, contador_bloque, draw, relations, spb);
+            drawInode(tempInodo, path, nombre_estructura+":"+to_string(listado_punteros[i].num_puntero), false, posicion_inodo, contador_inodo, contador_bloque, draw, relations, spb);
         }
     }
     fclose(file_folder);
