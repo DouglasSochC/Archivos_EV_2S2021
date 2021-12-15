@@ -1395,6 +1395,8 @@ void adm_cap::searchBlock(string path, int *pos_padre, int *pos_inodo, int*pos_b
                         listado_path->erase(listado_path->begin());
                         //Se asigna la posicion del inodo encontrado
                         *pos_inodo = folder.b_content[j].b_inodo;
+                        //Se asigna la posicion del bloque encontrado
+                        *pos_block = inodo->i_block[i];
                         //No hay mas datos en el path
                         if (listado_path->size() == 0){
                             encontrado = true;
@@ -1408,7 +1410,9 @@ void adm_cap::searchBlock(string path, int *pos_padre, int *pos_inodo, int*pos_b
                     //En el caso de hallar un archivo
                     else if(folder.b_content[j].b_name == nombre_archivo_o_carpeta && typeText(nombre_archivo_o_carpeta) == 'A'){
                         listado_path->erase(listado_path->begin());
-                        *pos_inodo = folder.b_content[j].b_inodo;                        
+                        *pos_inodo = folder.b_content[j].b_inodo;
+                        //Se asigna la posicion del bloque encontrado
+                        *pos_block = inodo->i_block[i];
                         encontrado = true;
                         break;
                     }
