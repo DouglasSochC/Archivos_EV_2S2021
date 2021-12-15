@@ -215,7 +215,7 @@ Recibirá el nombre del reporte que se desea y lo generará con graphviz en una 
 
 | Parámetro | Categoría   | Descripción                                                                                                                                                                                                                   |
 |-----------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>SB<br>JOURNALING<br>BM_INODE<br>BM_BLOCK<br>TREE<br>BLOCK<br>INODE<br>FILE<br>LS<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
+| -name     | Obligatorio | Nombre del reporte a generar. Tendrá los siguientes valores:<br>MBR<br>DISK<br>SB<br>JOURNALING<br>BM_INODE<br>BM_BLOCK<br>TREE<br>FILE<br>Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error.                        |
 | -path     | Obligatorio | Si recibe otro valor que no sea alguno de los anteriores, debe mostrar un error. Indica una carpeta y el nombre que tendrá el reporte. Si no existe la carpeta, deberá crearla. Si lleva espacios se encerrará entre comillas |
 | -id       | Obligatorio | Indica el id de la partición que se utilizará. Si el reporte es sobre la información del disco, se utilizará el disco al que pertenece la partición. Si no existe debe mostrar un error.                                      |
 
@@ -239,3 +239,6 @@ Este reporte mostrará la información del bit map de bloques, mostará todos lo
 
 ##### 1.7 Reporte TREE
 Este reporte genera el árbol de todo el sistema EXT2/EXT3. Se mostrará toda la información de los inodos o bloques. No se pondrán los apuntadores que no son utilizados.
+
+##### 1.8 Reporte FILE
+Este reporte muestra el nombre y todo el contenido del archivo especificado en el parámetro file (ruta).

@@ -423,11 +423,9 @@ void adm_cap::cat(map<string, string> param_got, disco::User UserLoggedIn){
     }
     //FIN - SE VERIFICA LA EXISTENCIA DEL PATH INGRESADO
     
-    //Se busca el bloque de carpeta que posee el nombre a modificar
     int pos_inodo_a_editar = 0;
     int pos_inodo_padre = -1;
     int pos_bloque_encontrado = -1;
-    string old_name = lista_path[lista_path.size() - 1];
     searchBlock(path_montura, &pos_inodo_padre, &pos_inodo_a_editar, &pos_bloque_encontrado, sp_user, &lista_path);
     disco::Inode inodoPadre = getInodo(pos_inodo_padre, *sp_user, path_montura);
 
@@ -465,7 +463,7 @@ void adm_cap::cat(map<string, string> param_got, disco::User UserLoggedIn){
     /*Final - Verificacion de Permisos*/
 
     string contenido = getContentArchive(pos_inodo_a_editar, path_montura, *sp_user);
-    cout << csnt_cap.GREEN << contenido << endl;
+    cout << csnt_cap.GREEN << contenido << csnt_cap.NC << endl;
     fclose(file);
 }
 

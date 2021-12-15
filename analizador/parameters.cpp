@@ -783,7 +783,7 @@ map<string, string> parameters::param_rep(vector<string> tokens){
         if (return_params.size() == 2){
             string llave = util_prmts.toLowerString(return_params[0]);
             string valor = return_params[1];
-            if (!(llave == "-comentario" || llave == "-name" || llave == "-path" || llave == "-id" || llave == "-ruta" || llave == "-root")){
+            if (!(llave == "-comentario" || llave == "-name" || llave == "-path" || llave == "-id" || llave == "-ruta")){
                 cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El parametro " << llave << " no es valido para el comando ejecutado" << endl;
                 map_u.clear();
                 return map_u;
@@ -808,11 +808,8 @@ map<string, string> parameters::param_rep(vector<string> tokens){
     string ruta = map_u["-ruta"];
 
     if (!name.empty() && !path.empty() && !id.empty()){
-        if (!(name == "mbr" || name == "disk" || name == "sb" || name == "journaling" || name == "bm_inode" || name == "bm_block" || name == "tree")){
+        if (!(name == "mbr" || name == "disk" || name == "sb" || name == "journaling" || name == "bm_inode" || name == "bm_block" || name == "tree" || name == "file")){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro NAME es incorrecto " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
-            map_u.clear();
-        }else if(!util_prmts.isNumber(map_u["-root"])){
-            cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " El valor ingresado en el parametro ROOT es incorrecto " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
             map_u.clear();
         }else if(util_prmts.check_existFile(path)){
             cout << cnst_prmts.RED << "ERROR:" << cnst_prmts.NC << " Ya existe un reporte con el mismo nombre en la ruta: " << path << " " << cnst_prmts.BLUE << comentario << cnst_prmts.NC << endl;
