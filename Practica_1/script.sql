@@ -1,0 +1,10 @@
+source eliminar_tablas.sql
+source crear_bd.sql
+source crear_tablas_temporales.sql
+source control_country_codes.sql
+source control_geonames.sql
+source control_level_1a.sql
+source control_locations.sql
+source control_projects.sql
+source control_transactions.sql
+source llenar_bd.sql
