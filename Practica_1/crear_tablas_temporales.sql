@@ -33,13 +33,13 @@ CREATE TABLE IF NOT EXISTS practica1.tmp_geonames(
 );
 
 CREATE TABLE IF NOT EXISTS practica1.tmp_level_1a(
-    project_id TEXT,
-    project_location_id TEXT,
-    geoname_id TEXT,
-    transactions_start_year TEXT,
-    transactions_end_year TEXT,
-    even_split_commitments TEXT,
-    even_split_disbursements  TEXT
+    project_id TEXT NOT NULL,
+    project_location_id TEXT NOT NULL,
+    geoname_id TEXT NOT NULL,
+    transactions_start_year TEXT NOT NULL,
+    transactions_end_year TEXT NOT NULL,
+    even_split_commitments TEXT NOT NULL,
+    even_split_disbursements TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS practica1.tmp_locations(

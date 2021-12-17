@@ -24,23 +24,23 @@ CREATE TABLE IF NOT EXISTS practica1.GEONAME(
 CREATE TABLE IF NOT EXISTS practica1.COUNTRY_CODES(
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(450) NOT NULL,
-    iso2 VARCHAR(10),
+    iso2 VARCHAR(20),
     name_name VARCHAR(450),
     name_aiddata_code INT,
     name_aiddata_name VARCHAR(500),
-    name_cow_alpha VARCHAR(10),
+    name_cow_alpha VARCHAR(20),
     name_cow_numeric INT,
     name_fao_code INT,
-    name_fips VARCHAR(10),
+    name_fips VARCHAR(20),
     name_geonames_id INT,
     name_imf_code INT,
-    name_iso2 VARCHAR(10),
-    name_iso3 VARCHAR(10),
+    name_iso2 VARCHAR(20),
+    name_iso3 VARCHAR(20),
     name_iso_numeric INT,
     name_oecd_code INT,
     name_oecd_name VARCHAR(450),
     name_un_code INT,
-    name_wb_code VARCHAR(10)
+    name_wb_code VARCHAR(20)
 );
 
 CREATE TABLE IF NOT EXISTS practica1.TYPE_STATUS(
@@ -76,10 +76,10 @@ CREATE TABLE IF NOT EXISTS practica1.LEVEL_1A(
     transactions_end_year YEAR NOT NULL,
     even_split_commitments DOUBLE NOT NULL,
     even_split_disbursements DOUBLE,
-    id_project VARCHAR(50) NOT NULL,
-    id_geomane BIGINT UNSIGNED,
+    id_project VARCHAR(50),
+    id_geoname BIGINT UNSIGNED,
     FOREIGN KEY (id_project) REFERENCES practica1.PROJECT(id),
-    FOREIGN KEY (id_geomane) REFERENCES practica1.GEONAME(id)
+    FOREIGN KEY (id_geoname) REFERENCES practica1.GEONAME(id)
 );
 
 CREATE TABLE IF NOT EXISTS practica1.CURRENCY(
