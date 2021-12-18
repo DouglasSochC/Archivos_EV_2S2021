@@ -20,6 +20,8 @@ El proyecto fue desarrollado en una distribucion GNU/Linux
 
 ### ⚙️ Pre - Ejecucion 
 
+#### Implementacion del rol Administrador y Empleado
+
 Loguearse (desde consola) al usuario creado cuando se realizo la instalacion de MySQL
 ```console
 ~$ mysql -u *usuario* -p
@@ -49,6 +51,8 @@ Para que los cambios se vean inmediatamente
 mysql> FLUSH PRIVILEGES;
 ```
 
+#### Habilitar local_infile de MySQL
+
 Comprobar que el local_infile este habilitado
 ```console
 mysql> show global variables like 'local_infile';
@@ -72,14 +76,46 @@ mysql> sudo sh execute.sh
 
 ## 📖 Documentacion
 
-### 📄 Archivos a Almacenar
+### 📇 Archivos a Almacenar
 
-IDA maneja distintos archivos para almacenar su información de forma separada en los diferentes departamentos de la asociación:
+#### IDA maneja distintos archivos para almacenar su información de forma separada en los diferentes departamentos de la asociación:
 
-#### • geonamess.csv
+- geonamess.csv
 Contiene datos geolocacionales según código geoname.
-#### • projects.csv
+- projects.csv
 Contienen toda la información relevante a los proyectos que la asociación tiene y ha tenido.
-#### • level_1a.csv
+- level_1a.csv
 Contiene información acerca de las rondas de financiamientos que se les han dado a los diferentes proyectos por lugar.
+
+#### IBRD maneja una pequeña base de datos para almacenar la información relevante a las transacciones de dinero:
+
+- transactions.csv
+Contiene informacion acerca de todas las transaciones que se han realizado en los proyectos
+
+#### Además, se manejan estándares ISO para los códigos de países y nombres geográficos:
+
+- country_codes.tsv:
+Contiene información estandarizada sobre países y sus códigos.
+- locations.csv:
+Contiene información sobre los tipos de lugares.
+
+### ✉️ Ejecutable
+
+Un archivo .sh realiza lo siguiente:
+1. Se loguea como usuario administrador y ejecuta un script.sql, el cual se explicara posteriormente su contenido
+2. Se loguea como usuario empleado para poder realizar las consultas.
+
+### 📜 Script.sql
+Este archivo realiza lo siguiente:
+
+• Script de eliminación de tablas.
+
+• Script de creación de base de datos.
+
+• Script de tablas temporales.
+
+• 5 archivos de control.
+
+• Script de llenado de base de datos.
+
 
