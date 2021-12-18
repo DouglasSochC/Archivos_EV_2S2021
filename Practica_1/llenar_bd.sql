@@ -5,7 +5,7 @@ INSERT INTO practica1.LOCATION (
     location_type_code, 
     location_type_name
 FROM practica1.tmp_locations;
-SELECT CONCAT('CANTIDAD_LOCATION: ',COUNT(id)) AS cantidad FROM practica1.LOCATION;
+SELECT COUNT(id) AS CANTIDAD_LOCATION FROM practica1.LOCATION;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -50,7 +50,7 @@ INSERT INTO practica1.COUNTRY_CODES (
     name_wb_code
 FROM
     practica1.tmp_country_codes;
-SELECT CONCAT('CANTIDAD_COUNTRY_CODES: ',COUNT(id)) AS cantidad FROM practica1.COUNTRY_CODES;
+SELECT COUNT(id) AS CANTIDAD_COUNTRY_CODES FROM practica1.COUNTRY_CODES;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -60,7 +60,7 @@ INSERT INTO practica1.TYPE_STATUS (
 ) SELECT DISTINCT
     status
 FROM practica1.tmp_projects;
-SELECT CONCAT('CANTIDAD_TYPE_STATUS: ',COUNT(id)) AS cantidad FROM practica1.TYPE_STATUS;
+SELECT COUNT(id) AS CANTIDAD_TYPE_STATUS FROM practica1.TYPE_STATUS;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -87,7 +87,7 @@ INSERT IGNORE INTO practica1.GEONAME(
     (SELECT id FROM practica1.LOCATION WHERE practica1.LOCATION.type_code = practica1.tmp_geonames.location_type_code)
 FROM 
     practica1.tmp_geonames;
-SELECT CONCAT('CANTIDAD_GEONAME: ',COUNT(id)) AS cantidad FROM practica1.GEONAME;
+SELECT COUNT(id) AS CANTIDAD_GEONAME FROM practica1.GEONAME;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -130,7 +130,7 @@ INSERT IGNORE INTO practica1.PROJECT (
     (SELECT id FROM practica1.TYPE_STATUS WHERE practica1.TYPE_STATUS.name = practica1.tmp_projects.status)
 FROM 
     practica1.tmp_projects;
-SELECT CONCAT('CANTIDAD_PROJECT: ',COUNT(id)) AS cantidad FROM practica1.PROJECT;
+SELECT COUNT(id) AS CANTIDAD_PROJECT FROM practica1.PROJECT;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -140,7 +140,7 @@ INSERT IGNORE INTO practica1.CURRENCY (
 ) SELECT DISTINCT
     transaction_currency
 FROM practica1.tmp_transactions;
-SELECT CONCAT('CANTIDAD_CURRENCY: ',COUNT(id)) AS cantidad FROM practica1.CURRENCY;
+SELECT COUNT(id) AS CANTIDAD_CURRENCY FROM practica1.CURRENCY;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -163,7 +163,7 @@ INSERT INTO practica1.TRANSACTION(
     (SELECT id FROM practica1.CURRENCY WHERE practica1.CURRENCY.transaction_currency = practica1.tmp_transactions.transaction_currency)
 FROM 
     practica1.tmp_transactions;
-SELECT CONCAT('CANTIDAD_TRANSACTION: ',COUNT(id)) AS cantidad FROM practica1.TRANSACTION;
+SELECT COUNT(id) AS CANTIDAD_TRANSACTION FROM practica1.TRANSACTION;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --
@@ -173,18 +173,16 @@ INSERT INTO practica1.LEVEL_1A(
     transactions_end_year,
     even_split_commitments,
     even_split_disbursements,
-    id_project/*,
-    id_geoname*/
+    id_project
 ) SELECT
     transactions_start_year,
     transactions_end_year,
     CAST(even_split_commitments AS DOUBLE),
     CAST(even_split_disbursements AS DOUBLE),
-    (SELECT id FROM practica1.PROJECT WHERE practica1.PROJECT.id = practica1.tmp_level_1a.project_id)/*,
-    (SELECT DISTINCT id FROM practica1.GEONAME WHERE practica1.GEONAME.geoname_id = practica1.tmp_level_1a.geoname_id LIMIT 1)*/
+    (SELECT id FROM practica1.PROJECT WHERE practica1.PROJECT.id = practica1.tmp_level_1a.project_id)
 FROM 
     practica1.tmp_level_1a;
-SELECT CONCAT('CANTIDAD_LEVEL_1A: ',COUNT(id)) AS cantidad FROM practica1.LEVEL_1A;
+SELECT COUNT(id) AS CANTIDAD_LEVEL_1A FROM practica1.LEVEL_1A;
 
 -- ******************************************************************************************** --
 -- ******************************************************************************************** --

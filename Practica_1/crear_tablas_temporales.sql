@@ -75,6 +75,3 @@ CREATE TABLE IF NOT EXISTS practica1.tmp_transactions(
     transaction_currency  TEXT NOT NULL,
     transaction_value  TEXT NOT NULL
 );
-
-
-
