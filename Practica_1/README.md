@@ -1,4 +1,4 @@
-# Sistema de Archivos EXT2 y EXT3
+# Integracion de Informacion
 
 _Este es una practica universitaria del curso de Manejo e Implementacion de Archivos en donde la idea principal es la integracion de informacion en una base de datos que a sido almacenada en documentos con extension .csv y .tsv_
 
